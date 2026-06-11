@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #07090f;
+  --surface: #0d1117;
+  --surface-2: #11161f;
+  --border: rgba(148, 163, 184, 0.12);
+  --foreground: #e6edf3;
+  --muted: #8b949e;
+  --accent: #38bdf8;
+  --accent-2: #a78bfa;
+  --accent-3: #34d399;
+  --amber: #fbbf24;
+  --rose: #fb7185;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 96px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: rgba(56, 189, 248, 0.3);
+}
+
+/* ---------- scrollbar ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- glassmorphism ---------- */
+.glass {
+  background: rgba(17, 22, 31, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+}
+
+.glass-strong {
+  background: rgba(13, 17, 23, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border);
+}
+
+/* ---------- hero animated gradient ---------- */
+.hero-gradient {
+  background:
+    radial-gradient(60% 80% at 20% 10%, rgba(56, 189, 248, 0.16) 0%, transparent 60%),
+    radial-gradient(50% 70% at 80% 20%, rgba(167, 139, 250, 0.16) 0%, transparent 60%),
+    radial-gradient(60% 90% at 50% 100%, rgba(52, 211, 153, 0.1) 0%, transparent 60%);
+}
+
+.animated-gradient-text {
+  background: linear-gradient(90deg, #38bdf8, #a78bfa, #34d399, #38bdf8);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-pan 8s linear infinite;
+}
+
+@keyframes gradient-pan {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(var(--rot, 0deg)); }
+  50% { transform: translateY(-14px) rotate(var(--rot, 0deg)); }
+}
+
+.float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes blink-caret {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.caret {
+  animation: blink-caret 1s step-end infinite;
+}
+
+/* ---------- code ---------- */
+.code-font {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+/* token colors */
+.tok-kw { color: #ff7b72; }
+.tok-str { color: #a5d6ff; }
+.tok-num { color: #f2cc60; }
+.tok-fn { color: #d2a8ff; }
+.tok-builtin { color: #79c0ff; }
+.tok-com { color: #6b7280; font-style: italic; }
+.tok-op { color: #ff9e64; }
+.tok-brace { color: #34d399; }
+
+/* ---------- prose helpers ---------- */
+.inline-code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.82em;
+  background: rgba(110, 118, 129, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 6px;
+  padding: 0.12em 0.4em;
+  color: #d2e3f5;
+  white-space: nowrap;
+}
+
+/* ---------- nav ---------- */
+.nav-active {
+  color: var(--accent);
+  border-left-color: var(--accent) !important;
+  background: rgba(56, 189, 248, 0.08);
+}
+
+/* ---------- misc ---------- */
+.section-anchor {
+  scroll-margin-top: 96px;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
 }
