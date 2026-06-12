@@ -34,6 +34,8 @@ export function TopicShell({
   nav,
   badges = ["▶ Runnable outputs", "🧠 Memory diagrams", "💥 Exception cases"],
   next,
+  backHref = "/python",
+  backLabel = "🐍 Python",
   children,
 }: {
   icon: string;
@@ -43,6 +45,8 @@ export function TopicShell({
   nav: NavItem[];
   badges?: string[];
   next?: { icon: string; label: string; href?: string };
+  backHref?: string;
+  backLabel?: string;
   children: ReactNode;
 }) {
   const active = useActiveSection(nav[0]?.id ?? "");
@@ -94,7 +98,7 @@ export function TopicShell({
           <nav className="flex min-w-0 items-center gap-2 text-xs text-slate-500">
             <Link href="/" className="transition hover:text-sky-400">🏠</Link>
             <span>/</span>
-            <Link href="/python" className="shrink-0 transition hover:text-sky-400">🐍 Python</Link>
+            <Link href={backHref} className="shrink-0 transition hover:text-sky-400">{backLabel}</Link>
             <span>/</span>
             <span className="truncate font-semibold text-slate-200">{title}</span>
           </nav>
@@ -168,9 +172,9 @@ export function TopicShell({
 
           {/* footer nav */}
           <div className="mt-12 flex flex-col gap-3 sm:flex-row">
-            <Link href="/python" className="glass flex-1 rounded-xl p-4 transition hover:border-sky-700/50">
+            <Link href={backHref} className="glass flex-1 rounded-xl p-4 transition hover:border-sky-700/50">
               <div className="text-[10px] uppercase tracking-widest text-slate-500">← Back</div>
-              <div className="mt-1 text-sm font-bold text-slate-200">🐍 Python categories</div>
+              <div className="mt-1 text-sm font-bold text-slate-200">{backLabel} categories</div>
             </Link>
             {next &&
               (next.href ? (
