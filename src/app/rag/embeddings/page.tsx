@@ -7,9 +7,9 @@ import { AnimatedFlow } from "@/components/animated-flow";
 const DIAGRAM = {
   title: "Embedding-based semantic search",
   nodes: [
-    { id: "question", icon: "S", label: "Question", sub: "How long can it fly?", x: 8, y: 50, color: "#22d3ee" },
+    { id: "question", icon: "🙋", label: "Question", sub: "How long can it fly?", x: 8, y: 50, color: "#22d3ee" },
     { id: "embed-q", icon: "🧲", label: "Embed question", sub: "API call", x: 25, y: 50, color: "#a78bfa" },
-    { id: "q-vector", icon: "🗐", label: "Q vector", sub: "[0.02, -0.14, ...]", x: 42, y: 50, color: "#fb923c" },
+    { id: "q-vector", icon: "📐", label: "Q vector", sub: "[0.02, -0.14, ...]", x: 42, y: 50, color: "#fb923c" },
     { id: "chunk1", icon: "📄", label: "Chunk 1 (battery)", sub: "stored vector", x: 42, y: 16, color: "#34d399" },
     { id: "chunk2", icon: "📄", label: "Chunk 2 (wind)", sub: "stored vector", x: 42, y: 50, color: "#34d399" },
     { id: "chunk3", icon: "📄", label: "Chunk 3 (returns)", sub: "stored vector", x: 42, y: 84, color: "#34d399" },
@@ -719,7 +719,7 @@ print(f"Embedded 3 docs: {total_tokens} tokens")
 # Cost calculation
 cost_per_million = 0.02  # $0.02 per 1M tokens
 cost = (total_tokens / 1_000_000) * cost_per_million
-print(f"Cost: \\${cost:.8f}")
+print(f"Cost: \${cost:.8f}")
 
 # Extrapolate to 10,000 chunks
 tokens_per_chunk = total_tokens / 3  # average
@@ -727,7 +727,7 @@ total_for_10k = tokens_per_chunk * 10_000
 cost_for_10k = (total_for_10k / 1_000_000) * cost_per_million
 print(f"\\nExtrapolation:")
 print(f"  10,000 chunks H {total_for_10k:.0f} tokens")
-print(f"  Cost: \\${cost_for_10k:.4f} (one-time ingest cost)")`}
+print(f"  Cost: \${cost_for_10k:.4f} (one-time ingest cost)")`}
           output={`Embedded 3 docs: 72 tokens
 Cost: $0.00000144
 
@@ -841,7 +841,7 @@ TASK 3: Compare keyword vs embedding retrieval
      "What's the camera resolution?" vs "4K camera with 3-axis gimbal"
      Expected score: ~0.75 (strong semantic match)
 
-  Run both. Observe: embedding wins even though "resolution" ` "4K" (keywords).
+  Run both. Observe: embedding wins even though "resolution" and "4K" share zero keywords.
 
 TASK 4: Measure embedding cost
   Count total tokens for 9 chunks (use resp.usage.total_tokens).

@@ -7,7 +7,7 @@ import { AnimatedFlow } from "@/components/animated-flow";
 const DIAGRAM = {
   title: "RAG in action: retrieve → generate",
   nodes: [
-    { id: "question", icon: "S", label: "User Question", sub: "battery query", x: 8, y: 50, color: "#22d3ee" },
+    { id: "question", icon: "🙋", label: "User Question", sub: "battery query", x: 8, y: 50, color: "#22d3ee" },
     { id: "embed", icon: "🧲", label: "Embed Query", sub: "text → vector", x: 28, y: 50, color: "#a78bfa" },
     { id: "search", icon: "🔍", label: "Vector Search", sub: "find chunks", x: 48, y: 50, color: "#fb923c" },
     { id: "manual", icon: "📄", label: "manual.md", sub: "28 min chunk", x: 48, y: 16, color: "#34d399" },
@@ -460,11 +460,11 @@ You'll build both in later chapters. For now, remember the split. 🎯`}
           rows={[
             [<><strong>What it does</strong></>, <>Retrieves docs at query time, pastes into prompt. LLM reads &amp; answers.</>, <>Re-trains the model on YOUR data. Model learns patterns, facts, style.</>],
             [<><strong>When to use</strong></>, <>You have KNOWLEDGE (docs, FAQs, manuals) the model must reference. Facts change often (new products, updated specs).</>, <>You want to change model BEHAVIOR (tone, format, reasoning style). Facts are stable (e.g., medical guidelines from 2020).</>],
-            [<><strong>Data freshness</strong></>, <🤅 Fresh: Update docs → retrieval uses new data instantly (no retraining).</>, <>L Stale: Must re-train to update facts (slow, expensive).</>],
+            [<><strong>Data freshness</strong></>, <>✅ Fresh: Update docs → retrieval uses new data instantly (no retraining).</>, <>❌ Stale: Must re-train to update facts (slow, expensive).</>],
             [<><strong>Cost</strong></>, <>💰 Cheap: Embedding + inference = ~$0.001/query. No training cost.</>, <>💰💰💰 Expensive: Training gpt-4o-mini = $0.60-$2/1K examples. Plus GPU time.</>],
-            [<><strong>Setup time</strong></>, <🧱 Fast: Ingest docs in minutes (embed + index). Query immediately.</>, <🧱→→ Slow: Prepare training data (weeks), train (hours/days), evaluate.</>],
-            [<><strong>Transparency</strong></>, <🤅 Explainable: You see which chunks were retrieved. You can cite sources.</>, <>L Black box: Model &quot;knows&quot; facts but can&apos;t show where it learned them.</>],
-            [<><strong>Hallucination risk</strong></>, <🤅 Low: If you retrieve good chunks and prompt &quot;answer ONLY from context,&quot; the model stays grounded.</>, <>L High: Model might still hallucinate if training didn&apos;t cover the question.</>],
+            [<><strong>Setup time</strong></>, <>⏱ Fast: Ingest docs in minutes (embed + index). Query immediately.</>, <>⏱→→ Slow: Prepare training data (weeks), train (hours/days), evaluate.</>],
+            [<><strong>Transparency</strong></>, <>✅ Explainable: You see which chunks were retrieved. You can cite sources.</>, <>❌ Black box: Model &quot;knows&quot; facts but can&apos;t show where it learned them.</>],
+            [<><strong>Hallucination risk</strong></>, <>✅ Low: If you retrieve good chunks and prompt &quot;answer ONLY from context,&quot; the model stays grounded.</>, <>❌ High: Model might still hallucinate if training didn&apos;t cover the question.</>],
             [<><strong>Example use case</strong></>, <>Support chatbot (10K docs, updated weekly), internal knowledge base, Q&amp;A over PDFs.</>, <>Customer service tone (train model to be formal/friendly), code completion (train on your codebase style).</>],
           ]}
         />

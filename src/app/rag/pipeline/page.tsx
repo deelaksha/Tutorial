@@ -7,8 +7,8 @@ import { AnimatedFlow } from "@/components/animated-flow";
 const DIAGRAM = {
   title: "The full RAG pipeline — from question to cited answer",
   nodes: [
-    { id: "user", icon: "=d", label: "User", sub: "asks question", x: 3, y: 50, color: "#22d3ee" },
-    { id: "embed", icon: "="", label: "Embed Question", sub: "text-embedding-3-small", x: 14, y: 50, color: "#fb923c" },
+    { id: "user", icon: "🙋", label: "User", sub: "asks question", x: 3, y: 50, color: "#22d3ee" },
+    { id: "embed", icon: "🧲", label: "Embed Question", sub: "text-embedding-3-small", x: 14, y: 50, color: "#fb923c" },
     { id: "chroma", icon: "💾", label: "Chroma", sub: "11 chunks", x: 25, y: 50, color: "#a78bfa" },
     { id: "top3", icon: "🎯", label: "Top-3 Chunks", sub: "similarity ranked", x: 36, y: 50, color: "#34d399" },
     { id: "format", icon: "📝", label: "format_docs", sub: "join chunks", x: 47, y: 50, color: "#fbbf24" },
@@ -101,7 +101,7 @@ export default function PipelinePage() {
       icon="🏗️"
       title="The Full RAG Pipeline — End to End"
       gradientWord="Pipeline"
-      subtitle="Ingest → retrieve → prompt → generate → cite. This is the flagship topic: you'll build the complete NimbusBot RAG system from scratch. Every stage traced with real intermediate values. By the end, you'll have a working chatbot that answers from docs, cites sources, and says \"I don't know\" when it should. This is RAG done right."
+      subtitle="Ingest → retrieve → prompt → generate → cite. This is the flagship topic: you'll build the complete NimbusBot RAG system from scratch. Every stage traced with real intermediate values. By the end, you'll have a working chatbot that answers from docs, cites sources, and says 'I don't know' when it should. This is RAG done right."
       nav={NAV}
       badges={["🔗 LCEL chain: retriever | prompt | LLM", "💬 RAG prompt design", "📚 Citations + sources", "🧪 Quick eval harness", "🤖 Complete chatbot script"]}
       next={{ icon: "💬", label: "Conversational RAG — Memory", href: "/rag/conversational" }}

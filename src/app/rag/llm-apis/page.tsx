@@ -13,7 +13,7 @@ const DIAGRAM = {
     { id: "response", icon: "📝", label: "completion", sub: "text + metadata", x: 70, y: 50, color: "#34d399" },
     { id: "history", icon: "💾", label: "append to history", sub: "for next turn", x: 50, y: 16, color: "#fbbf24" },
     { id: "usage", icon: "💰", label: "usage", sub: "tokens + cost", x: 50, y: 84, color: "#f472b6" },
-    { id: "client", icon: "🔍", label: "your Python code", sub: "prints answer", x: 90, y: 50, color: "#60a5fa" },
+    { id: "client", icon: "🐍", label: "your Python code", sub: "prints answer", x: 90, y: 50, color: "#60a5fa" },
   ],
   edges: [
     { id: "msg-api", from: "messages", to: "api", color: "#22d3ee" },
@@ -609,10 +609,10 @@ input_cost = (input_tokens / 1_000_000) * 0.15   # $0.15 per 1M
 output_cost = (output_tokens / 1_000_000) * 0.60  # $0.60 per 1M
 total_cost = input_cost + output_cost
 
-print(f"Cost: \\${input_cost:.6f} (input) + \\${output_cost:.6f} (output) = \\${total_cost:.6f} total")
+print(f"Cost: \${input_cost:.6f} (input) + \${output_cost:.6f} (output) = \${total_cost:.6f} total")
 
 # Extrapolate to 1000 calls
-print(f"\\n1000 calls like this = \\${total_cost * 1000:.4f}")`}
+print(f"\\n1000 calls like this = \${total_cost * 1000:.4f}")`}
           output={`Answer: The Nimbus X1 battery lasts about 28 minutes on a full charge.
 
 Tokens: 18 input, 14 output
