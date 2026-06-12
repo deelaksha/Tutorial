@@ -71,6 +71,30 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    title: "Data Analysis — Pandas",
+    emoji: "🐼",
+    items: [
+      { id: "pandas-intro", icon: "🐼", name: "Pandas — Series & DataFrames", desc: "Why pandas beats loops and Excel, Series & DataFrame anatomy drawn as labelled grids, reading a real CSV, and the first-look toolkit: head, info, describe.", meta: "10 sections · start pandas here ⭐", href: "/python/pandas-intro", available: true },
+      { id: "pandas-selection", icon: "🎯", name: "Selecting & Filtering", desc: "loc vs iloc side by side, boolean masks drawn row by row, combining conditions with & | (and the ValueError without parentheses), plus the SettingWithCopyWarning fix.", meta: "10 sections · the core skill ⭐", href: "/python/pandas-selection", available: true },
+      { id: "pandas-cleaning", icon: "🧹", name: "Cleaning Real-World Data", desc: "A genuinely dirty CSV fixed step by step: missing values, wrong dtypes, duplicates, messy strings — ending in one reusable cleaning pipeline.", meta: "10 sections · the real 80%", href: "/python/pandas-cleaning", available: true },
+      { id: "pandas-groupby", icon: "🧮", name: "GroupBy & Aggregation", desc: "Split-apply-combine physically drawn: revenue per city in one line, named aggregations, transform vs agg, pivot tables — every number computed on real data.", meta: "10 sections · analyst superpower ⭐", href: "/python/pandas-groupby", available: true },
+      { id: "pandas-merge", icon: "🔗", name: "Merge, Join & Concat", desc: "Two tables become one: inner/left/right/outer joins drawn with the rows that survive, the silent inner-join data-loss trap, indicator audits and concat.", meta: "10 sections · joins drawn", href: "/python/pandas-merge", available: true },
+      { id: "pandas-project", icon: "📊", name: "Capstone — Sales Analysis", desc: "A full analyst workflow end to end: load dirty files → clean → merge → answer 5 real business questions → export the report, then wrap it in a reusable script.", meta: "10 sections · end-to-end project ⭐", href: "/python/pandas-project", available: true },
+    ],
+  },
+  {
+    title: "APIs — Build & Consume",
+    emoji: "🌐",
+    items: [
+      { id: "api-intro", icon: "🌐", name: "APIs from Zero — What Even Is an API?", desc: "Assume nothing: the waiter analogy, client vs server, URLs piece by piece, raw HTTP requests drawn line by line, the 4 verbs, status codes (4xx = you, 5xx = them) and JSON ⇄ dict — your first call with curl.", meta: "14 sections · start APIs here ⭐", href: "/python/api-intro", available: true },
+      { id: "api-requests", icon: "📡", name: "The requests Library", desc: "Call any API like a pro: GET with params, POST with json=, the response object toured, raise_for_status + try/except for every failure, timeouts, pagination loops, API keys from env vars and Sessions.", meta: "16 sections · consume anything ⭐", href: "/python/api-requests", available: true },
+      { id: "api-fastapi", icon: "⚡", name: "FastAPI — Build Your First API", desc: "Your own API in 8 lines: routes via decorators, automatic JSON, path & query params with type-hint validation (the helpful 422), HTTPException 404s and the free Swagger /docs — then call it with requests, full circle.", meta: "16 sections · serve your code ⭐", href: "/python/api-fastapi", available: true },
+      { id: "api-crud", icon: "🗃️", name: "CRUD — A Real Orders API", desc: "All five endpoints coded fully: Pydantic validation (watch 422 reject qty=-3), input vs output models, in-memory first then SQLite with parameterized queries (the SQL-injection trap shown), restart-persistence proven.", meta: "11 sections · the real thing", href: "/python/api-crud", available: true },
+      { id: "api-auth", icon: "🔐", name: "Auth & Security", desc: "Lock it down: API keys, bcrypt password hashing (never plaintext — same password, different hashes), JWT decoded part by part (payload is readable!), the full login flow, protected routes with Depends, and CORS.", meta: "13 sections · protect your API ⭐", href: "/python/api-auth", available: true },
+      { id: "api-project", icon: "🚀", name: "Capstone — Ship the Brew & Bean API", desc: "Spec → structured project (routers, models, auth, db) built file by file → /stats aggregations → 12 pytest tests with TestClient → smoke-test script → deploy prep. A portfolio-ready API, end to end.", meta: "16 sections · end-to-end project ⭐", href: "/python/api-project", available: true },
+    ],
+  },
+  {
     title: "Data Structures & Algorithms",
     emoji: "🧮",
     items: [

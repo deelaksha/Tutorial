@@ -1,0 +1,834 @@
+"use client";
+
+import { TopicShell, MemorizeGrid } from "@/components/topic-shell";
+import { Section, CodeBlock, Callout, P, IC, Table } from "@/components/ui";
+import { AnimatedFlow } from "@/components/animated-flow";
+
+const DIAGRAM = {
+  title: "Ingest Nimbus docs → query battery life",
+  nodes: [
+    { id: "docs", icon: "📄", label: "3 Docs", sub: "manual/faq/warranty", x: 8, y: 50, color: "#22d3ee" },
+    { id: "splitter", icon: "✂️", label: "Chunk", sub: "size=500, overlap=80", x: 24, y: 50, color: "#a78bfa" },
+    { id: "embedder", icon: "🧮", label: "Embeddings", sub: "text-embedding-3-small", x: 40, y: 50, color: "#fb923c" },
+    { id: "faiss", icon: "🗂️", label: "FAISS Index", sub: "L2 distance", x: 56, y: 24, color: "#fbbf24" },
+    { id: "query", icon: "❓", label: "User Query", sub: "How long battery?", x: 72, y: 50, color: "#34d399" },
+    { id: "results", icon: "📋", label: "Top-k Docs", sub: "k=2 chunks", x: 88, y: 50, color: "#60a5fa" },
+    { id: "chroma", icon: "💾", label: "Chroma DB", sub: "./nimbus_db persist", x: 56, y: 76, color: "#f472b6" },
+  ],
+  edges: [
+    { id: "docs-splitter", from: "docs", to: "splitter", color: "#22d3ee" },
+    { id: "splitter-embedder", from: "splitter", to: "embedder", color: "#a78bfa" },
+    { id: "embedder-faiss", from: "embedder", to: "faiss", color: "#fb923c" },
+    { id: "faiss-results", from: "faiss", to: "results", bend: 60, color: "#fbbf24" },
+    { id: "query-faiss", from: "query", to: "faiss", color: "#34d399" },
+    { id: "embedder-chroma", from: "embedder", to: "chroma", dashed: true, color: "#f472b6" },
+    { id: "chroma-results", from: "chroma", to: "results", bend: -50, dashed: true, color: "#f472b6" },
+  ],
+  flows: [
+    {
+      id: "happy",
+      name: "✅ Ingest → Query",
+      command: 'vs.similarity_search("How long does the X1 battery last?", k=2)',
+      steps: [
+        { node: "docs", paths: ["docs-splitter"], text: "Start with 3 Nimbus docs: manual.md (battery specs: 28 min), faq.md (common questions), warranty.md (30-day return policy). Raw text, not yet searchable by meaning." },
+        { node: "splitter", paths: ["splitter-embedder"], text: "Chunk into 500-char pieces with 80-char overlap. Manual splits into 12 chunks, faq into 8, warranty into 6. Total: 26 Document objects with metadata source: 'manual.md', etc." },
+        { node: "embedder", paths: ["embedder-faiss"], text: "OpenAIEmbeddings(model='text-embedding-3-small') converts each chunk to a 1536-dim vector. Embedding cost: 26 API calls. This is the expensive step — happens ONCE during ingest." },
+        { node: "faiss", paths: [], text: "FAISS.from_documents(docs, embeddings) builds an in-memory index. Stores: vector (1536 floats) + original chunk text + metadata. Ready for ANN search. Index lives in RAM (fine for 26 chunks, not for 10M)." },
+        { node: "query", paths: ["query-faiss"], text: "User asks: 'How long does the X1 battery last?' Query is embedded (1 API call) into the SAME 1536-dim space. FAISS searches for nearest neighbors by L2 distance." },
+        { node: "faiss", paths: ["faiss-results"], text: "ANN search returns k=2 closest chunks. Distance scores: chunk #4 (battery section) → 0.31, chunk #11 (FAQs) → 0.78. LOWER score = better match (L2 distance, not similarity)." },
+        { node: "results", paths: [], text: "You get 2 Document objects: [0] source='manual.md', text='...battery lasts about 28 minutes...', [1] source='faq.md', text='...charge time 90 min...'. Feed these to the LLM as context. 🎉" },
+      ],
+    },
+    {
+      id: "fail",
+      name: "❌ Dimension Mismatch",
+      command: "Query with text-embedding-3-large (index used 3-small)",
+      steps: [
+        { node: "docs", paths: ["docs-splitter"], text: "Ingest phase: same 3 docs, same chunking. So far, identical to happy path." },
+        { node: "splitter", paths: ["splitter-embedder"], text: "26 chunks created. Metadata attached. Ready to embed." },
+        { node: "embedder", paths: ["embedder-faiss"], text: "Embedded with text-embedding-3-small → 1536 dimensions. This is the model you chose during INGEST. Index is built with 1536-dim vectors." },
+        { node: "faiss", paths: [], text: "FAISS index stored 26 vectors × 1536 dims. Index shape is locked: all future queries MUST use the same 1536-dim model." },
+        { node: "query", paths: ["query-faiss"], text: "Oops! You changed to OpenAIEmbeddings(model='text-embedding-3-large') for querying. This model outputs 3072 dimensions (different from index)." },
+        { node: "faiss", paths: [], text: "ValueError: dimension mismatch. Index expects 1536, query vector is 3072. FAISS cannot search — you MUST use the SAME embedding model for ingest AND query. Crash! 🚨" },
+        { node: "results", paths: [], text: "No results. Fix: re-create the FAISS index with text-embedding-3-large (re-embed all 26 chunks), OR switch query back to 3-small. Embedding models are sticky: pick ONE and stick with it. 🔒" },
+      ],
+    },
+    {
+      id: "power",
+      name: "⚡ Metadata Filter (warranty only)",
+      command: 'vs.similarity_search(query, k=2, filter={"source": "warranty.md"})',
+      steps: [
+        { node: "docs", paths: ["docs-splitter"], text: "Same 3 docs. Each chunk will carry metadata: {'source': 'manual.md'} or 'faq.md' or 'warranty.md'. This metadata enables filtering." },
+        { node: "splitter", paths: ["splitter-embedder"], text: "26 chunks total: 12 from manual, 8 from faq, 6 from warranty. Metadata preserved on every Document." },
+        { node: "embedder", paths: ["embedder-chroma"], text: "This time, we use Chroma (not FAISS) because Chroma persists to disk AND has better metadata filtering. Embed with 3-small → 1536 dims, same as before." },
+        { node: "chroma", paths: [], text: "Chroma.from_documents(docs, embeddings, persist_directory='./nimbus_db'). All 26 chunks stored in SQLite + vectors on disk. Restart the script? No re-embedding needed — Chroma reloads from ./nimbus_db. 💾" },
+        { node: "query", paths: ["chroma-results"], text: "Query: 'Can I return my drone after 6 weeks?' with filter={'source': 'warranty.md'}. Chroma searches ONLY the 6 warranty chunks (ignores manual + faq). Scoped search!" },
+        { node: "chroma", paths: ["chroma-results"], text: "ANN search within the 6-chunk subset. Top result: '30-day return window' chunk (score 0.42). Without the filter, a manual chunk might rank higher — filtering changes results. 🎯" },
+        { node: "results", paths: [], text: "Returns: 2 warranty chunks (or fewer if k &gt; available). Use filters when you want product-specific answers (filter by product_id) or customer-scoped data (filter by customer_id). Powerful for multi-tenant RAG. ⚡" },
+      ],
+    },
+  ],
+};
+
+const NAV = [
+  { id: "why-numpy", label: "Why Numpy Loops Don't Scale" },
+  { id: "what-vs", label: "What a Vector Store Does ⭐" },
+  { id: "faiss", label: "FAISS Quickstart ⭐" },
+  { id: "scores", label: "similarity_search_with_score" },
+  { id: "save-load", label: "Save/Load Local" },
+  { id: "chroma", label: "Chroma — The Persistent Store ⭐" },
+  { id: "metadata", label: "Metadata Filtering" },
+  { id: "retriever", label: "as_retriever Preview" },
+  { id: "ann", label: "How ANN Indexes Work at 10,000 ft" },
+  { id: "faiss-vs-chroma", label: "FAISS vs Chroma vs Managed" },
+  { id: "debugging", label: "Debugging & Common Errors" },
+  { id: "lab", label: "Lab Exercise" },
+  { id: "interview", label: "Interview Questions" },
+  { id: "memorize", label: "🧠 Memorize This" },
+];
+
+export default function VectorStoresPage() {
+  return (
+    <TopicShell
+      icon="🗂️"
+      title="Vector Stores — FAISS & Chroma"
+      gradientWord="Vector"
+      subtitle="A database where the index is MEANING. Vector stores turn semantic search from a 40-line numpy loop (dead at 10M docs) into a millisecond ANN query. You'll ingest the Nimbus docs, query battery life, save/load indexes, filter by metadata, and understand why embeddings alone aren't enough — you need fast retrieval."
+      nav={NAV}
+      badges={["🗂️ FAISS & Chroma", "🔍 ANN search", "💾 Persistence", "🎯 Metadata filters", "⚡ as_retriever"]}
+      next={{ icon: "🦜", label: "LangChain Core — Models, Prompts, Parsers", href: "/rag/langchain-intro" }}
+      backHref="/rag"
+      backLabel="🦜 RAG & LangChain"
+    >
+      <AnimatedFlow {...DIAGRAM} />
+
+      {/* 01 */}
+      <Section id="why-numpy" number="01" title="Why Numpy Loops Don't Scale">
+        <P>
+          In the embeddings topic, we built a 40-line search engine: embed the query, compute cosine similarity to all 6 chunks, pick the top-2. Beautiful. But it&apos;s a <strong>linear scan</strong> — O(n). For 6 chunks, instant. For 10 million chunks? Dead. ☠️
+        </P>
+        <CodeBlock
+          title="our_old_engine.py (from embeddings topic)"
+          code={`import numpy as np
+from openai import OpenAI
+
+client = OpenAI()
+
+chunks = [
+    "The Nimbus X1 battery lasts about 28 minutes...",
+    "Firmware updates via the Nimbus mobile app...",
+    "30-day return policy...",
+    # ... 3 more chunks (total 6)
+]
+
+def embed(text):
+    r = client.embeddings.create(model="text-embedding-3-small", input=text)
+    return r.data[0].embedding
+
+# Embed all chunks once (6 API calls, ~0.5s each = 3s total)
+chunk_vecs = [embed(c) for c in chunks]
+
+def search(query, k=2):
+    q_vec = embed(query)  # 1 API call
+    sims = [np.dot(q_vec, cv) / (np.linalg.norm(q_vec)*np.linalg.norm(cv)) for cv in chunk_vecs]
+    top_idx = np.argsort(sims)[::-1][:k]
+    return [(chunks[i], sims[i]) for i in top_idx]
+
+results = search("How long does the X1 battery last?")
+print(results[0])  # ('The Nimbus X1 battery lasts about 28 minutes...', 0.89)`}
+          output={`('The Nimbus X1 battery lasts about 28 minutes...', 0.8924)
+# ✅ Works! But this is O(n): we compute 6 dot products every query.`}
+        />
+        <P>
+          <strong>The scaling problem:</strong>
+        </P>
+        <Table
+          head={["Corpus size", "Compute per query (cosine sim)", "Time @ 1ms/comparison", "Feasible?"]}
+          rows={[
+            ["6 chunks", "6 dot products", "0.006 seconds", "✅ Instant"],
+            ["1,000 chunks", "1,000 dot products", "1 second", "✅ Tolerable"],
+            ["100,000 chunks", "100,000 dot products", "100 seconds", "⚠️ Slow (users wait 1.5 min)"],
+            ["10,000,000 chunks", "10,000,000 dot products", "10,000 seconds (2.7 hours)", "❌ Dead. Unacceptable."],
+          ]}
+        />
+        <P>
+          Even with GPU acceleration (10x faster), 10M chunks still takes 16 minutes per query. <strong>Vector stores solve this</strong> with <strong>ANN (Approximate Nearest Neighbors)</strong> algorithms: index the vectors in a smart data structure (graph, tree, clusters) so you search a TINY subset (~1000 vectors) instead of ALL 10M. Trade 1% accuracy for 1000x speed. 🚀
+        </P>
+        <Callout type="note">
+          📌 ANN is <strong>approximate</strong>. You might miss the TRUE top-1 result, but you&apos;ll get a result that&apos;s 99% as good in 1ms instead of 2 hours. This tradeoff powers Google, Spotify, every semantic search system at scale.
+        </Callout>
+      </Section>
+
+      {/* 02 */}
+      <Section id="what-vs" number="02" title="What a Vector Store Does ⭐">
+        <P>
+          A <strong>vector store</strong> (also called a vector database) stores <strong>vectors + metadata + original text</strong>, and lets you search by meaning (semantic search) via ANN.
+        </P>
+        <Table
+          head={["What it stores", "Example (one chunk)"]}
+          rows={[
+            [<IC>id</IC>, "chunk_0007"],
+            [<IC>vector</IC>, "[0.021, -0.34, 0.88, ... ] (1536 floats for text-embedding-3-small)"],
+            [<IC>text</IC>, "'The Nimbus X1 battery lasts about 28 minutes on a full charge.'"],
+            [<IC>metadata</IC>, <>{'{'}<IC>&quot;source&quot;: &quot;manual.md&quot;, &quot;page&quot;: 4</IC>{'}'}</>],
+          ]}
+        />
+        <P>
+          <strong>When you query</strong> with a question like &quot;How long does the X1 battery last?&quot;, the vector store:
+        </P>
+        <CodeBlock
+          title="vector_store_query.txt"
+          runnable={false}
+          code={`1. Embeds your query → 1536-dim vector (1 API call)
+2. Runs ANN search in the index (FAST: ~1-10ms for millions of docs)
+3. Returns k nearest neighbors (default k=4)
+   Each neighbor is a Document(page_content=text, metadata={...})
+4. You feed these Documents to the LLM as context → RAG complete!`}
+        />
+        <Callout type="analogy">
+          🌍 <strong>Warehouse analogy</strong>: Imagine a warehouse where items are shelved by SIMILARITY (all red items together, all electronics together, etc.) instead of alphabetically. When a picker needs &quot;something like this,&quot; they walk to ONE aisle (the cluster) instead of checking all 10,000 aisles. That&apos;s ANN: pre-organize vectors into neighborhoods so search is a local lookup, not a global scan.
+        </Callout>
+      </Section>
+
+      {/* 03 */}
+      <Section id="faiss" number="03" title="FAISS Quickstart ⭐">
+        <P>
+          <strong>FAISS</strong> (Facebook AI Similarity Search) is Meta&apos;s open-source vector search library. It&apos;s in-memory, blazing fast, and perfect for prototyping. Let&apos;s ingest 6 Nimbus chunks and query battery life.
+        </P>
+        <CodeBlock
+          title="terminal"
+          code={`pip install faiss-cpu langchain-community langchain-openai`}
+        />
+        <CodeBlock
+          title="faiss_demo.py"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+
+# 1. Create 6 Document objects (chunks from Nimbus docs)
+docs = [
+    Document(page_content="The Nimbus X1 battery lasts about 28 minutes on a full charge.", metadata={"source": "manual.md"}),
+    Document(page_content="Range: up to 5 km in ideal conditions.", metadata={"source": "manual.md"}),
+    Document(page_content="Weight: 795 grams including battery.", metadata={"source": "manual.md"}),
+    Document(page_content="How long does the battery last? About 28 minutes.", metadata={"source": "faq.md"}),
+    Document(page_content="Firmware updates are delivered via the Nimbus mobile app.", metadata={"source": "manual.md"}),
+    Document(page_content="We offer a 30-day return policy if you are not satisfied.", metadata={"source": "warranty.md"}),
+]
+
+# 2. Create embeddings model (same as before, but wrapped by LangChain)
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")  # 1536 dims
+
+# 3. Ingest: embed all docs and build FAISS index (6 API calls, ~3s)
+vs = FAISS.from_documents(docs, embeddings)
+print("FAISS index built! 6 chunks indexed.")
+
+# 4. Query: semantic search (1 API call to embed the query, then instant ANN search)
+results = vs.similarity_search("How long does the X1 battery last?", k=2)
+
+print(f"\\nTop {len(results)} results:")
+for i, doc in enumerate(results):
+    print(f"{i+1}. [{doc.metadata['source']}] {doc.page_content[:60]}...")`}
+          output={`FAISS index built! 6 chunks indexed.
+
+Top 2 results:
+1. [manual.md] The Nimbus X1 battery lasts about 28 minutes on a full ...
+2. [faq.md] How long does the battery last? About 28 minutes.`}
+        />
+        <P>
+          <strong>What just happened?</strong>
+        </P>
+        <CodeBlock
+          title="breakdown.txt"
+          runnable={false}
+          code={`FAISS.from_documents(docs, embeddings)
+  → Calls embeddings.embed_documents([doc.page_content for doc in docs])
+  → OpenAI API: 6 calls to text-embedding-3-small (batched internally)
+  → Returns 6 vectors × 1536 dims
+  → Builds FAISS IndexFlatL2 (brute-force L2 distance, exact search)
+  → Stores: vectors + original doc text + metadata
+  → Index lives in RAM (vs object)
+
+vs.similarity_search(query, k=2)
+  → Calls embeddings.embed_query(query) → 1 API call → 1536-dim vector
+  → FAISS searches the index (6 vectors → instant, <1ms)
+  → Returns 2 Document objects with lowest L2 distance
+
+────────────────────────────────────────────────────────────────
+COST: 7 embedding API calls total (6 ingest + 1 query).
+  text-embedding-3-small: $0.02 per 1M tokens.
+  6 chunks × ~20 tokens each = 120 tokens → ~$0.0000024 (negligible).
+
+SPEED: Ingest ~3s (network latency). Query <1ms (after embedding). ✅`}
+        />
+        <Callout type="tip">
+          💡 <strong>IndexFlatL2 = exact search</strong>. FAISS has 50+ index types (HNSW, IVF, PQ). <IC>IndexFlatL2</IC> is brute-force (compares to ALL vectors) — fine for &lt;100k docs. For millions, you&apos;d use <IC>IndexHNSWFlat</IC> (graph-based ANN). LangChain&apos;s FAISS wrapper defaults to Flat (simple, exact). Production systems upgrade to HNSW.
+        </Callout>
+      </Section>
+
+      {/* 04 */}
+      <Section id="scores" number="04" title="similarity_search_with_score">
+        <P>
+          By default, <IC>similarity_search</IC> returns just the Documents. Use <IC>similarity_search_with_score</IC> to see the <strong>distance scores</strong>. ⚠️ FAISS returns <strong>L2 DISTANCE</strong> (Euclidean), not cosine similarity. <strong>LOWER is better</strong> (0 = identical, higher = more different).
+        </P>
+        <CodeBlock
+          title="faiss_scores.py"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+
+docs = [
+    Document(page_content="The Nimbus X1 battery lasts about 28 minutes.", metadata={"source": "manual.md"}),
+    Document(page_content="Range: up to 5 km.", metadata={"source": "manual.md"}),
+    Document(page_content="Weight: 795 grams.", metadata={"source": "manual.md"}),
+    Document(page_content="30-day return policy.", metadata={"source": "warranty.md"}),
+]
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+vs = FAISS.from_documents(docs, embeddings)
+
+# Query with scores
+results = vs.similarity_search_with_score("How long does the battery last?", k=3)
+
+for doc, score in results:
+    print(f"Score: {score:.4f} | [{doc.metadata['source']}] {doc.page_content}")`}
+          output={`Score: 0.3142 | [manual.md] The Nimbus X1 battery lasts about 28 minutes.
+Score: 0.7834 | [manual.md] Range: up to 5 km.
+Score: 0.8921 | [manual.md] Weight: 795 grams.`}
+        />
+        <P>
+          <strong>Reading L2 distance scores:</strong>
+        </P>
+        <Table
+          head={["Score", "Meaning", "Action"]}
+          rows={[
+            [<IC>0.31</IC>, "Very close (battery chunk matches battery query)", "✅ Highly relevant — use this"],
+            [<IC>0.78</IC>, "Medium distance (range is somewhat related to battery question)", "⚠️ Borderline — might include as context"],
+            [<IC>0.89</IC>, "Far (weight has nothing to do with battery life)", "❌ Irrelevant — discard or lower k"],
+          ]}
+        />
+        <Callout type="mistake">
+          ⚠️ <strong>Common mistake</strong>: Reading L2 distance like cosine similarity. People see <IC>0.31</IC> and think &quot;only 31% match, terrible!&quot; No — 0.31 is a SMALL distance (good match). 0.0 = perfect match. Higher scores = worse matches. In production, set a threshold like <IC>if score &lt; 0.5: use_chunk</IC> to filter out junk. 🎯
+        </Callout>
+      </Section>
+
+      {/* 05 */}
+      <Section id="save-load" number="05" title="Save/Load Local">
+        <P>
+          FAISS indexes live in RAM by default. When your script exits, poof — gone. <strong>Save to disk</strong> to avoid re-embedding on every run (saves time + API cost).
+        </P>
+        <CodeBlock
+          title="faiss_save.py"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+
+docs = [
+    Document(page_content="The Nimbus X1 battery lasts about 28 minutes.", metadata={"source": "manual.md"}),
+    Document(page_content="Range: up to 5 km.", metadata={"source": "manual.md"}),
+    Document(page_content="Firmware updates via Nimbus app.", metadata={"source": "manual.md"}),
+]
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+vs = FAISS.from_documents(docs, embeddings)
+
+# Save to disk (creates folder: nimbus_faiss/)
+vs.save_local("nimbus_faiss")
+print("✅ FAISS index saved to nimbus_faiss/")`}
+          output={`✅ FAISS index saved to nimbus_faiss/`}
+        />
+        <CodeBlock
+          title="faiss_load.py (separate script — no re-embedding!)"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+
+# Load from disk (instant, no API calls)
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")  # needed for querying
+vs = FAISS.load_local("nimbus_faiss", embeddings, allow_dangerous_deserialization=True)
+
+print("✅ FAISS index loaded from nimbus_faiss/")
+
+# Query (1 API call to embed the query, index is already in memory)
+results = vs.similarity_search("How long does the battery last?", k=1)
+print(f"Top result: {results[0].page_content}")`}
+          output={`✅ FAISS index loaded from nimbus_faiss/
+Top result: The Nimbus X1 battery lasts about 28 minutes.`}
+        />
+        <P>
+          <strong>allow_dangerous_deserialization=True explained:</strong>
+        </P>
+        <Callout type="note">
+          📌 FAISS indexes use Python pickle to serialize. Pickle can execute arbitrary code (security risk if you load an index from an untrusted source). The <IC>allow_dangerous_deserialization=True</IC> flag acknowledges this risk. <strong>Only load indexes YOU created</strong> or from trusted teammates. Never load a random <IC>.faiss</IC> file from the internet. 🔒
+        </Callout>
+      </Section>
+
+      {/* 06 */}
+      <Section id="chroma" number="06" title="Chroma — The Persistent Store ⭐">
+        <P>
+          <strong>Chroma</strong> is a persistent vector database (SQLite backend). Unlike FAISS (manual save/load), Chroma auto-saves to disk. Restart your script? It reloads from <IC>persist_directory</IC> — <strong>no re-embedding</strong>. Perfect for dev/prod. 💾
+        </P>
+        <CodeBlock
+          title="terminal"
+          code={`pip install langchain-chroma`}
+        />
+        <CodeBlock
+          title="chroma_ingest.py (run once)"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+
+docs = [
+    Document(page_content="The Nimbus X1 battery lasts about 28 minutes.", metadata={"source": "manual.md"}),
+    Document(page_content="Range: up to 5 km in ideal conditions.", metadata={"source": "manual.md"}),
+    Document(page_content="Weight: 795 grams including battery.", metadata={"source": "manual.md"}),
+    Document(page_content="Firmware updates via the Nimbus mobile app.", metadata={"source": "manual.md"}),
+    Document(page_content="30-day return policy if not satisfied.", metadata={"source": "warranty.md"}),
+    Document(page_content="12-month warranty covers manufacturing defects.", metadata={"source": "warranty.md"}),
+]
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
+# Ingest: embed + persist to ./nimbus_db (6 API calls)
+vs = Chroma.from_documents(docs, embeddings, persist_directory="./nimbus_db")
+print("✅ Chroma DB created at ./nimbus_db (6 chunks embedded and persisted)")`}
+          output={`✅ Chroma DB created at ./nimbus_db (6 chunks embedded and persisted)`}
+        />
+        <P>
+          Now <strong>restart the script</strong> (or run a different script). The embeddings are already on disk — no re-computation:
+        </P>
+        <CodeBlock
+          title="chroma_query.py (run after ingest — NO re-embedding!)"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
+# Load existing DB (no from_documents — just connect to ./nimbus_db)
+vs = Chroma(persist_directory="./nimbus_db", embedding_function=embeddings)
+print("✅ Chroma DB loaded from ./nimbus_db (no API calls)")
+
+# Query (1 API call to embed the query)
+results = vs.similarity_search("Can I return the drone after 6 weeks?", k=2)
+
+print(f"\\nTop {len(results)} results:")
+for i, doc in enumerate(results):
+    print(f"{i+1}. [{doc.metadata['source']}] {doc.page_content}")`}
+          output={`✅ Chroma DB loaded from ./nimbus_db (no API calls)
+
+Top 2 results:
+1. [warranty.md] 30-day return policy if not satisfied.
+2. [warranty.md] 12-month warranty covers manufacturing defects.`}
+        />
+        <P>
+          <strong>Embedding cost paid ONCE</strong> 🎉. First script: 6 embedding calls ($0.0000024). Second script: 0 embedding calls (index reloaded from disk). Query embedding: 1 call each time. This is how production RAG works: ingest offline, query online.
+        </P>
+        <Callout type="tip">
+          💡 <strong>FAISS vs Chroma persistence</strong>: FAISS requires manual <IC>.save_local()</IC> / <IC>.load_local()</IC>. Chroma auto-persists every write. For dev, Chroma is easier. For production, both work — FAISS is faster at scale (millions of docs), Chroma has better metadata filtering. We&apos;ll use Chroma for the rest of this course. 💾
+        </Callout>
+      </Section>
+
+      {/* 07 */}
+      <Section id="metadata" number="07" title="Metadata Filtering">
+        <P>
+          <strong>Metadata filters</strong> let you scope queries to a subset of chunks. Example: &quot;Only search warranty docs&quot; or &quot;Only product X&quot; or &quot;Only chunks from customer Y&quot;. This is HUGE for multi-tenant RAG (SaaS apps where each customer has their own data).
+        </P>
+        <CodeBlock
+          title="chroma_filter.py"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
+
+docs = [
+    Document(page_content="The Nimbus X1 battery lasts about 28 minutes.", metadata={"source": "manual.md", "product": "X1"}),
+    Document(page_content="Range: up to 5 km.", metadata={"source": "manual.md", "product": "X1"}),
+    Document(page_content="30-day return policy.", metadata={"source": "warranty.md", "product": "X1"}),
+    Document(page_content="The Nimbus Pro battery lasts 45 minutes.", metadata={"source": "manual.md", "product": "Pro"}),
+]
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+vs = Chroma.from_documents(docs, embeddings, persist_directory="./nimbus_multi")
+
+# Query 1: All products
+results = vs.similarity_search("How long does the battery last?", k=2)
+print("All products:")
+for doc in results:
+    print(f"  [{doc.metadata['product']}] {doc.page_content}")
+
+# Query 2: Filter to warranty.md only
+results = vs.similarity_search("How long does the battery last?", k=2, filter={"source": "warranty.md"})
+print("\\nFiltered to warranty.md:")
+for doc in results:
+    print(f"  [{doc.metadata['source']}] {doc.page_content}")
+
+# Query 3: Filter to Pro product only
+results = vs.similarity_search("How long does the battery last?", k=2, filter={"product": "Pro"})
+print("\\nFiltered to Pro product:")
+for doc in results:
+    print(f"  [{doc.metadata['product']}] {doc.page_content}")`}
+          output={`All products:
+  [X1] The Nimbus X1 battery lasts about 28 minutes.
+  [Pro] The Nimbus Pro battery lasts 45 minutes.
+
+Filtered to warranty.md:
+  [warranty.md] 30-day return policy.
+
+Filtered to Pro product:
+  [Pro] The Nimbus Pro battery lasts 45 minutes.`}
+        />
+        <P>
+          <strong>When to use filters:</strong>
+        </P>
+        <Table
+          head={["Scenario", "Filter example"]}
+          rows={[
+            ["Multi-product docs (X1 vs Pro)", <><IC>{`{"product": "X1"}`}</IC> → only X1 chunks</>],
+            ["Multi-customer SaaS (each customer has their own data)", <><IC>{`{"customer_id": "cust_789"}`}</IC> → isolate customer data</>],
+            ["Document type (manual vs blog vs support tickets)", <><IC>{`{"doc_type": "manual"}`}</IC> → only official docs</>],
+            ["Date range (only recent docs)", <><IC>{`{"year": 2024}`}</IC> → exclude old content</>],
+          ]}
+        />
+        <Callout type="note">
+          📌 <strong>Performance note</strong>: Filters are applied AFTER the ANN search (post-filtering) in most vector DBs (including Chroma). So if you have 10k chunks but only 50 match the filter, Chroma still searches all 10k, then filters. For huge corpora, consider separate indexes per filter dimension (one DB per customer). 🎯
+        </Callout>
+      </Section>
+
+      {/* 08 */}
+      <Section id="retriever" number="08" title="as_retriever Preview">
+        <P>
+          LangChain chains expect a <strong>Retriever</strong> interface (not a raw VectorStore). Call <IC>.as_retriever()</IC> to convert. A Retriever has one method: <IC>.invoke(query)</IC> → returns a list of Documents. This is the bridge to LCEL chains (next topic).
+        </P>
+        <CodeBlock
+          title="retriever_demo.py"
+          code={`from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+vs = Chroma(persist_directory="./nimbus_db", embedding_function=embeddings)
+
+# Convert VectorStore → Retriever
+retriever = vs.as_retriever(search_kwargs={"k": 3})
+
+# Retriever has .invoke(query) → list of Documents
+results = retriever.invoke("How long does the X1 battery last?")
+
+print(f"Retriever returned {len(results)} docs:")
+for doc in results:
+    print(f"  - {doc.page_content[:50]}...")`}
+          output={`Retriever returned 3 docs:
+  - The Nimbus X1 battery lasts about 28 minutes....
+  - Range: up to 5 km in ideal conditions....
+  - Firmware updates via the Nimbus mobile app....`}
+        />
+        <P>
+          <strong>Why Retriever?</strong> LangChain chains compose Runnables. A Retriever is a Runnable (has <IC>.invoke</IC>). A VectorStore is NOT a Runnable (its method is <IC>.similarity_search</IC>). By wrapping as a Retriever, you can plug it into chains with the <IC>|</IC> pipe. We&apos;ll use this heavily in the LCEL topic. 🔗
+        </P>
+        <CodeBlock
+          title="search_kwargs explained"
+          runnable={false}
+          code={`retriever = vs.as_retriever(search_kwargs={"k": 3})
+                                          ↑
+                        Dict of args passed to similarity_search
+
+Common options:
+  {"k": 5}                               → top-5 results
+  {"k": 3, "filter": {"source": "faq"}}  → top-3 from faq.md
+  {"score_threshold": 0.5}               → only chunks with score < 0.5 (Chroma)
+
+Note: search_kwargs syntax varies by VectorStore. Chroma/FAISS use "k", "filter".
+      Pinecone uses "top_k", "namespace". Check docs for your DB. 🔍`}
+        />
+      </Section>
+
+      {/* 09 */}
+      <Section id="ann" number="09" title="How ANN Indexes Work at 10,000 ft">
+        <P>
+          You don&apos;t need to implement ANN, but understanding the intuition helps debug. Two popular ANN algorithms: <strong>IVF (Inverted File)</strong> and <strong>HNSW (Hierarchical Navigable Small World)</strong>.
+        </P>
+        <CodeBlock
+          title="ivf_intuition.txt"
+          runnable={false}
+          code={`IVF (Inverted File — clustering approach)
+═══════════════════════════════════════════════════════════════
+
+IDEA: Pre-cluster vectors into K buckets (e.g., K=100). Each bucket
+      is a "centroid" (like a cluster center). At query time, find
+      the nearest centroids (e.g., top-3), then search ONLY those
+      3 buckets (not all vectors).
+
+EXAMPLE (10M vectors, 100 clusters):
+  - Ingest: k-means clustering → 100 centroids
+    Each vector assigned to 1 bucket → ~100k vectors/bucket
+  - Query: Compare query vector to 100 centroids → find closest 3
+    Search ~300k vectors (3 buckets × 100k) instead of 10M
+    → 33× speedup, ~99% recall (might miss true top-1 if it's in a
+      different cluster, but usually close enough)
+
+TRADE-OFF:
+  - More clusters (K=1000) → smaller buckets → faster, lower recall
+  - Fewer clusters (K=10) → bigger buckets → slower, higher recall
+
+────────────────────────────────────────────────────────────────
+HNSW (Hierarchical Navigable Small World — graph approach)
+════════════════════════════════════════════════════════════════
+
+IDEA: Build a graph where each vector is a node, edges connect
+      similar vectors. Search = navigate the graph (like a highway
+      system: start on a highway, zoom into local roads).
+
+LAYERS:
+  Layer 0 (bottom): All vectors, dense connections (local roads)
+  Layer 1: Subset of vectors, long-range connections (highways)
+  Layer 2: Even smaller subset (express highways)
+
+QUERY:
+  1. Start at a random node in top layer → follow edges to nearest
+  2. Drop to next layer → refine search
+  3. Drop to bottom layer → local search → find exact neighbors
+
+TRADE-OFF:
+  - More layers / more edges per node → faster, higher memory
+  - Fewer layers → slower, less memory
+
+────────────────────────────────────────────────────────────────
+ASCII VISUALIZATION (IVF with 4 clusters)
+════════════════════════════════════════════════════════════════
+
+      Centroid A       Centroid B       Centroid C       Centroid D
+         ⭐               ⭐               ⭐               ⭐
+        / | \\           / | \\           / | \\           / | \\
+       •  •  •         •  •  •         •  •  •         •  •  •
+      Bucket A        Bucket B        Bucket C        Bucket D
+      (2.5M vecs)     (2.5M vecs)     (2.5M vecs)     (2.5M vecs)
+
+QUERY VECTOR: ❓
+  1. Compare to 4 centroids → closest: B, C
+  2. Search only Buckets B + C (5M vecs total)
+  3. Return top-k from those 5M
+
+Result: 50% of data searched, ~98% recall, 2× speedup. ✅`}
+        />
+        <Callout type="behind">
+          ⚙️ <strong>Behind the scenes</strong>: FAISS <IC>IndexFlatL2</IC> (default in LangChain) is brute-force (no ANN — compares to ALL vectors). For &lt;100k docs, it&apos;s fine (fast enough). For millions, FAISS offers <IC>IndexIVFFlat</IC> (IVF), <IC>IndexHNSWFlat</IC> (HNSW), and quantized variants (PQ = Product Quantization, compresses vectors 32×). Production RAG systems use HNSW + PQ for billion-scale search. 🚀
+        </Callout>
+      </Section>
+
+      {/* 10 */}
+      <Section id="faiss-vs-chroma" number="10" title="FAISS vs Chroma vs Managed">
+        <Table
+          head={["Feature", "FAISS (langchain-community)", "Chroma (langchain-chroma)", "Managed (Pinecone/Weaviate)"]}
+          rows={[
+            ["Persistence", "Manual (save_local / load_local)", "Auto-persist to disk (persist_directory)", "Cloud-hosted (always persistent)"],
+            ["Metadata filtering", "Limited (post-filter in Python)", "Good (SQL WHERE clause)", "Excellent (native indexes on metadata)"],
+            ["Scale (vectors)", "Millions (with HNSW, single machine)", "100k-1M (SQLite bottleneck)", "Billions (distributed, sharded)"],
+            ["Setup", <><IC>pip install faiss-cpu</IC> (local)</>, <><IC>pip install langchain-chroma</IC> (local)</>, "API key + cloud account ($$)"],
+            ["Cost", "Free (runs locally)", "Free (runs locally)", "$0.10-$1/M vectors/month (Pinecone)"],
+            ["Best for", "Prototyping, fast iteration, local dev", "Dev + small prod, persistent, metadata filtering", "Production at scale, multi-region, high availability"],
+          ]}
+        />
+        <P>
+          <strong>Our choice for this course:</strong> Chroma. Persistent, filters, zero config, free. FAISS is faster but needs manual save/load. Pinecone is production-grade but costs money and requires internet. Chroma is the sweet spot for learning + small-scale prod. 💾
+        </P>
+      </Section>
+
+      {/* 11 */}
+      <Section id="debugging" number="11" title="Debugging & Common Errors">
+        <Callout type="mistake">
+          ⚠️ <strong>Error 1: ValueError: dimension mismatch (1536 vs 3072)</strong>
+        </Callout>
+        <CodeBlock
+          title="terminal"
+          code={`# Ingest with text-embedding-3-small (1536 dims)
+# Query with text-embedding-3-large (3072 dims)`}
+          error
+          output={`ValueError: Index dimension (1536) does not match query dimension (3072)`}
+        />
+        <P>
+          <strong>Fix</strong>: You MUST use the SAME embedding model for ingest and query. If you change models, re-create the index from scratch (delete <IC>./nimbus_db</IC>, re-run ingest). Embedding models are sticky. 🔒
+        </P>
+        <Callout type="mistake">
+          ⚠️ <strong>Error 2: Empty results (k=5 but only 2 chunks returned)</strong>
+        </Callout>
+        <CodeBlock
+          title="terminal"
+          code={`results = vs.similarity_search(query, k=5)
+len(results)  # 2 (expected 5)`}
+        />
+        <P>
+          <strong>Causes</strong>: (1) Filter too strict — only 2 chunks match <IC>{`{"source": "warranty.md"}`}</IC>. (2) Your DB only has 2 chunks. (3) Score threshold set too low (Chroma returns fewer than k if scores exceed threshold). <strong>Fix</strong>: Check how many chunks are in the DB, remove/relax the filter, or lower k.
+        </P>
+        <Callout type="mistake">
+          ⚠️ <strong>Error 3: Stale results after re-chunking (old chunks still show up)</strong>
+        </Callout>
+        <CodeBlock
+          title="terminal"
+          code={`# You changed chunk_size from 500 to 1000 and re-ran ingest
+# But old 500-char chunks still appear in results`}
+        />
+        <P>
+          <strong>Fix</strong>: Chroma appends by default (doesn&apos;t overwrite). Delete <IC>./nimbus_db</IC> folder, re-run ingest. Or use <IC>collection.delete()</IC> to clear. In production, version your indexes (e.g., <IC>./nimbus_db_v2</IC>) so you can roll back.
+        </P>
+        <Callout type="tip">
+          💡 <strong>Debugging checklist</strong>: (1) Print <IC>len(results)</IC> — did you get k results? (2) Print <IC>results[0].metadata</IC> — is the source correct? (3) Print the query embedding shape — <IC>len(embeddings.embed_query(&quot;test&quot;))</IC> should match your index dims (1536 for 3-small). (4) Check <IC>./nimbus_db</IC> exists and is not empty (should have a <IC>chroma.sqlite3</IC> file). 🔍
+        </Callout>
+      </Section>
+
+      {/* 12 */}
+      <Section id="lab" number="12" title="Lab Exercise">
+        <CodeBlock
+          title="lab_tasks.txt"
+          runnable={false}
+          code={`LAB: Ingest 3 Nimbus docs, query, filter, compare FAISS vs Chroma
+══════════════════════════════════════════════════════════════════
+
+TASK 1: Ingest 3 Nimbus docs into Chroma
+  Create 12 Document objects (mix of manual.md, faq.md, warranty.md).
+  Sample chunks:
+    - "The Nimbus X1 battery lasts about 28 minutes." (manual.md)
+    - "Range: up to 5 km in ideal conditions." (manual.md)
+    - "Weight: 795 grams including battery." (manual.md)
+    - "Max wind resistance: 38 km/h." (manual.md)
+    - "How long does the battery last? About 28 minutes." (faq.md)
+    - "How do I update firmware? Via the Nimbus mobile app." (faq.md)
+    - "We offer a 30-day return policy." (warranty.md)
+    - "12-month warranty covers manufacturing defects." (warranty.md)
+    - "Warranty does NOT cover water damage or crashes." (warranty.md)
+    - "To claim warranty, email support@nimbusgear.com." (warranty.md)
+    - "Returns must include all original packaging." (warranty.md)
+    - "Refunds processed within 7 business days." (warranty.md)
+
+  Code:
+    from langchain_openai import OpenAIEmbeddings
+    from langchain_chroma import Chroma
+    from langchain_core.documents import Document
+
+    docs = [ ... 12 Document objects ... ]
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    vs = Chroma.from_documents(docs, embeddings, persist_directory="./nimbus_db")
+    print("✅ Ingested 12 chunks")
+
+  Verify: ./nimbus_db folder exists, contains chroma.sqlite3
+
+TASK 2: Query battery life
+  Code:
+    results = vs.similarity_search("How long does the X1 battery last?", k=2)
+    for doc in results:
+        print(doc.page_content)
+
+  Expected: Top 2 results mention "28 minutes"
+
+TASK 3: Query return policy with metadata filter
+  Code:
+    results = vs.similarity_search(
+        "Can I return it after 6 weeks?",
+        k=3,
+        filter={"source": "warranty.md"}
+    )
+    for doc in results:
+        print(f"[{doc.metadata['source']}] {doc.page_content}")
+
+  Expected: 3 warranty chunks, "30-day return policy" should rank high
+  Observation: 6 weeks > 30 days → the answer is NO (but the retrieval
+               succeeds; the LLM will interpret "30 days" and answer NO)
+
+TASK 4: Query WITHOUT filter, observe the difference
+  Code:
+    results = vs.similarity_search("Can I return it after 6 weeks?", k=3)
+    for doc in results:
+        print(f"[{doc.metadata['source']}] {doc.page_content}")
+
+  Expected: Mix of warranty + maybe faq/manual chunks
+  Observation: Filter changes the result set — scoped search matters!
+
+TASK 5: Compare FAISS vs Chroma speed (ingest + query)
+  Code (FAISS):
+    import time
+    from langchain_community.vectorstores import FAISS
+
+    start = time.time()
+    vs_faiss = FAISS.from_documents(docs, embeddings)
+    ingest_time = time.time() - start
+
+    start = time.time()
+    results = vs_faiss.similarity_search("battery?", k=2)
+    query_time = time.time() - start
+
+    print(f"FAISS ingest: {ingest_time:.2f}s, query: {query_time*1000:.1f}ms")
+
+  Code (Chroma, reuse existing DB):
+    from langchain_chroma import Chroma
+
+    start = time.time()
+    vs_chroma = Chroma(persist_directory="./nimbus_db", embedding_function=embeddings)
+    load_time = time.time() - start
+
+    start = time.time()
+    results = vs_chroma.similarity_search("battery?", k=2)
+    query_time_c = time.time() - start
+
+    print(f"Chroma load: {load_time:.2f}s, query: {query_time_c*1000:.1f}ms")
+
+  Expected:
+    - FAISS ingest: ~4-6s (12 embedding calls)
+    - Chroma load: ~0.1s (no embedding, reads from disk)
+    - Query time: both <50ms (instant ANN, 12 vectors is tiny)
+
+  Takeaway: Chroma wins on reusability (no re-embed). FAISS wins on
+            raw speed (in-memory, no SQLite overhead). For 12 chunks,
+            no difference. For 100k chunks, FAISS query is 2-5× faster,
+            but Chroma's persistence saves hours on re-ingest. 💾
+
+TASK 6: Break it (learn from errors)
+  - Delete ./nimbus_db, try to load → sqlite3.OperationalError
+  - Ingest with 3-small, query with 3-large → dimension mismatch
+  - Set k=20 but only 12 chunks exist → returns 12 (not an error, just fewer)
+
+──────────────────────────────────────────────────────────────────
+BONUS: Add as_retriever and test invoke
+  retriever = vs.as_retriever(search_kwargs={"k": 3})
+  results = retriever.invoke("How long does the battery last?")
+  print(f"Retriever returned {len(results)} docs")
+
+  Expected: 3 docs (same as similarity_search, but Runnable interface)`}
+        />
+      </Section>
+
+      {/* 13 */}
+      <Section id="interview" number="13" title="Interview Questions">
+        <Table
+          head={["Question", "Strong answer"]}
+          rows={[
+            ["What is a vector store and why do we need it?", "A vector store is a database that stores embeddings (vectors) + metadata + original text, and provides fast semantic search via ANN (Approximate Nearest Neighbors). We need it because brute-force cosine similarity is O(n) — fine for 100 docs, dead at 1M. Vector stores use indexes (HNSW, IVF) to search a subset of vectors in ~1ms, trading 1% recall for 1000× speed."],
+            ["What's the difference between FAISS and Chroma?", "FAISS is an in-memory library (Meta) — blazing fast, supports 50+ index types (HNSW, IVF, PQ), but requires manual save/load. Chroma is a persistent vector DB (SQLite) — auto-saves to disk, good metadata filtering, easier for dev/prod, but slower at huge scale. FAISS for speed/scale, Chroma for persistence/simplicity. Both are free and local."],
+            ["What does similarity_search return?", "A list of Document objects (from langchain_core.documents). Each Document has .page_content (the chunk text) and .metadata (dict of source, page, etc.). By default, top-k results sorted by relevance (lowest L2 distance for FAISS/Chroma). Use similarity_search_with_score to see distance scores."],
+            ["What's the difference between L2 distance and cosine similarity?", "Cosine similarity measures angle (range 0-1, higher = more similar). L2 distance (Euclidean) measures geometric distance (range 0-∞, LOWER = more similar). FAISS uses L2 by default. Normalized embeddings (OpenAI text-embedding-* are normalized) make L2 and cosine equivalent (same ranking), but scores differ. Key: L2 0.3 is GOOD (close), 0.9 is BAD (far). Don't confuse with cosine! 📏"],
+            ["How do you save and load a FAISS index?", <>Use <IC>vs.save_local(&quot;folder&quot;)</IC> to save, <IC>FAISS.load_local(&quot;folder&quot;, embeddings, allow_dangerous_deserialization=True)</IC> to load. The <IC>allow_dangerous_deserialization</IC> flag is required because FAISS uses pickle (can execute code). Only load indexes you trust. Chroma auto-persists (no manual save/load needed).</>],
+            ["What is metadata filtering and when do you use it?", "Metadata filtering scopes a search to a subset of chunks (e.g., filter={'source': 'warranty.md'} → only warranty docs). Use cases: multi-product docs (filter by product_id), multi-customer SaaS (filter by customer_id), date ranges (filter by year). Filters are post-search in most DBs (ANN runs on all vectors, then filter), so large filter cardinality can be slow. For strict isolation, consider separate indexes per tenant. 🎯"],
+            ["What is as_retriever and why do we need it?", <>A Retriever is a LangChain interface with <IC>.invoke(query)</IC> → list of Documents. VectorStore has <IC>.similarity_search(query)</IC> (not a Runnable). Calling <IC>vs.as_retriever()</IC> wraps the VectorStore as a Retriever (Runnable), so you can plug it into LCEL chains with the <IC>|</IC> pipe. Think of it as an adapter. 🔗</>],
+            ["What is ANN and how does it work?", "ANN = Approximate Nearest Neighbors. Instead of comparing the query to ALL vectors (O(n)), ANN pre-indexes vectors into clusters (IVF) or graphs (HNSW), then searches a small subset (~1000 vectors). This trades ~1% recall (might miss the true top-1) for 1000× speed. IVF clusters vectors (k-means), searches nearest clusters. HNSW builds a graph, navigates like highways → local roads. Both enable million-scale search in milliseconds. 🚀"],
+            ["How do you handle dimension mismatch errors?", "Dimension mismatch happens when you ingest with one embedding model (e.g., text-embedding-3-small, 1536 dims) and query with another (text-embedding-3-large, 3072 dims). Fix: ALWAYS use the SAME model for ingest and query. If you change models, delete the old index and re-ingest all chunks. Embedding models are immutable once you build an index. Version your indexes if you experiment with models (./db_v1_small, ./db_v2_large). 🔒"],
+            ["What are common causes of empty or wrong results?", "(1) Filter too strict (e.g., filter={'source': 'xyz'} but no chunks have that source). (2) k too high (requested k=10 but only 3 chunks in DB). (3) Score threshold too low (Chroma returns fewer if scores exceed threshold). (4) Stale index after re-chunking (old chunks still in DB — delete persist dir and re-ingest). (5) Wrong embedding model (dimension mismatch). Debug: print len(results), results[0].metadata, check persist dir exists. 🔍"],
+          ]}
+        />
+      </Section>
+
+      {/* 14 */}
+      <Section id="memorize" number="14" title="🧠 Memorize This">
+        <MemorizeGrid
+          items={[
+            ["Install FAISS", "pip install faiss-cpu langchain-community langchain-openai"],
+            ["Install Chroma", "pip install langchain-chroma"],
+            ["FAISS ingest", "vs = FAISS.from_documents(docs, embeddings); vs.save_local('folder')"],
+            ["FAISS load", "vs = FAISS.load_local('folder', embeddings, allow_dangerous_deserialization=True)"],
+            ["Chroma ingest", "vs = Chroma.from_documents(docs, embeddings, persist_directory='./db')"],
+            ["Chroma load", "vs = Chroma(persist_directory='./db', embedding_function=embeddings)"],
+            ["Search", "results = vs.similarity_search(query, k=3) → list of Documents"],
+            ["Search + scores", "results = vs.similarity_search_with_score(query, k=3) → [(doc, score), ...]"],
+            ["Metadata filter", "vs.similarity_search(query, k=2, filter={'source': 'manual.md'})"],
+            ["as_retriever", "retriever = vs.as_retriever(search_kwargs={'k': 3}); retriever.invoke(query)"],
+            ["L2 distance", "LOWER = better (0.3 good, 0.9 bad). NOT cosine similarity!"],
+            ["Same model!", "Ingest and query MUST use the same embedding model (dimension must match)"],
+          ]}
+        />
+      </Section>
+    </TopicShell>
+  );
+}

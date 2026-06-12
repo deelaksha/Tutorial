@@ -91,6 +91,7 @@ export function AnimatedFlow({ title, nodes, edges, flows }: AnimatedFlowProps) 
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(2600);
   const [selected, setSelected] = useState(flows[0]?.steps[0]?.node ?? "");
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   const flow = useMemo(
     () => flows.find((f) => f.id === flowId) ?? flows[0],
@@ -153,8 +154,26 @@ export function AnimatedFlow({ title, nodes, edges, flows }: AnimatedFlowProps) 
         </div>
       </div>
 
-      {/* canvas */}
-      <div className="relative h-[340px] sm:h-[400px] mx-2 mt-2">
+      {/* canvas — 3D tilt stage */}
+      <div
+        className="mx-2 mt-2"
+        style={{ perspective: "1100px" }}
+        onMouseMove={(ev) => {
+          const r = ev.currentTarget.getBoundingClientRect();
+          const px = (ev.clientX - r.left) / r.width - 0.5;
+          const py = (ev.clientY - r.top) / r.height - 0.5;
+          setTilt({ x: -py * 9, y: px * 12 });
+        }}
+        onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+      >
+      <div
+        className="relative h-[340px] sm:h-[400px]"
+        style={{
+          transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transformStyle: "preserve-3d",
+          transition: "transform 200ms ease-out",
+        }}
+      >
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
           viewBox={`0 0 ${VB_W} ${VB_H}`}
@@ -212,7 +231,9 @@ export function AnimatedFlow({ title, nodes, edges, flows }: AnimatedFlowProps) 
               style={{
                 left: `${n.x}%`,
                 top: `${n.y}%`,
-                transform: "translate(-50%, -50%)",
+                transform: active
+                  ? "translate(-50%, -50%) translateZ(42px) scale(1.05)"
+                  : "translate(-50%, -50%) translateZ(14px)",
                 borderColor: active ? accent : undefined,
                 boxShadow: active ? `0 0 28px -6px ${accent}99` : undefined,
                 background: active
@@ -237,6 +258,7 @@ export function AnimatedFlow({ title, nodes, edges, flows }: AnimatedFlowProps) 
             </button>
           );
         })}
+      </div>
       </div>
 
       {/* narrative bar */}
