@@ -9,13 +9,13 @@ const DIAGRAM = {
   nodes: [
     { id: "user", icon: "=d", label: "User", sub: "asks question", x: 3, y: 50, color: "#22d3ee" },
     { id: "embed", icon: "="", label: "Embed Question", sub: "text-embedding-3-small", x: 14, y: 50, color: "#fb923c" },
-    { id: "chroma", icon: "=æ", label: "Chroma", sub: "11 chunks", x: 25, y: 50, color: "#a78bfa" },
-    { id: "top3", icon: "<Ø", label: "Top-3 Chunks", sub: "similarity ranked", x: 36, y: 50, color: "#34d399" },
-    { id: "format", icon: "=›", label: "format_docs", sub: "join chunks", x: 47, y: 50, color: "#fbbf24" },
-    { id: "prompt", icon: "=¨", label: "Prompt", sub: "system + context + question", x: 58, y: 50, color: "#f472b6" },
-    { id: "llm", icon: ">‡", label: "gpt-4o-mini", sub: "generate", x: 69, y: 50, color: "#60a5fa" },
+    { id: "chroma", icon: "üíæ", label: "Chroma", sub: "11 chunks", x: 25, y: 50, color: "#a78bfa" },
+    { id: "top3", icon: "üéØ", label: "Top-3 Chunks", sub: "similarity ranked", x: 36, y: 50, color: "#34d399" },
+    { id: "format", icon: "üìù", label: "format_docs", sub: "join chunks", x: 47, y: 50, color: "#fbbf24" },
+    { id: "prompt", icon: "üí¨", label: "Prompt", sub: "system + context + question", x: 58, y: 50, color: "#f472b6" },
+    { id: "llm", icon: "üß†", label: "gpt-4o-mini", sub: "generate", x: 69, y: 50, color: "#60a5fa" },
     { id: "answer", icon: "", label: "Answer", sub: "with citations", x: 80, y: 50, color: "#34d399" },
-    { id: "sources", icon: "=⁄", label: "Sources", sub: "metadata list", x: 91, y: 50, color: "#a78bfa" },
+    { id: "sources", icon: "üìö", label: "Sources", sub: "metadata list", x: 91, y: 50, color: "#a78bfa" },
   ],
   edges: [
     { id: "user-embed", from: "user", to: "embed", color: "#22d3ee" },
@@ -56,12 +56,12 @@ const DIAGRAM = {
         { node: "format", paths: ["format-prompt"], text: "format_docs joins the 3 low-relevance chunks: \"Max wind 38 km/h...\\n\\nGPS return-to-home...\\n\\nWeight: 795g...\". This context does NOT answer the question. The LLM will have to admit it doesn't know." },
         { node: "prompt", paths: ["prompt-llm"], text: "Prompt includes: System instruction: \"If the answer is not in the context, say you don't know. DO NOT make up information.\" + Context (3 irrelevant chunks) + Question: \"Does the X1 have obstacle avoidance?\"" },
         { node: "llm", paths: ["llm-answer"], text: "gpt-4o-mini reads the context, sees no mention of obstacle avoidance. It follows the system instruction and generates: \"I don't have information about obstacle avoidance features in the provided documentation.\" Honest answer!" },
-        { node: "answer", paths: [], text: "Output: \"I don't have information about obstacle avoidance features in the provided documentation.\" No hallucination! The system instruction saved us. Without it, GPT might invent an answer. This is RAG done right. Lí" },
+        { node: "answer", paths: [], text: "Output: \"I don't have information about obstacle avoidance features in the provided documentation.\" No hallucination! The system instruction saved us. Without it, GPT might invent an answer. This is RAG done right. L‚ùì" },
       ],
     },
     {
       id: "power",
-      name: "° Returns question with filtered retrieval + citations",
+      name: "‚ùì Returns question with filtered retrieval + citations",
       command: 'retriever.search(query, filter={"source": "docs/warranty.md"})',
       steps: [
         { node: "user", paths: ["user-embed"], text: "User asks: \"What is your return policy?\" We'll use metadata filtering to only search the warranty.md file. This is more precise than searching all 11 chunks." },
@@ -72,7 +72,7 @@ const DIAGRAM = {
         { node: "prompt", paths: ["prompt-llm"], text: "Prompt: System + Context (3 warranty chunks) + Question. We can also inject: \"Cite your sources in brackets.\" The LLM will include [warranty.md] in the answer." },
         { node: "llm", paths: ["llm-answer"], text: "gpt-4o-mini generates: \"Returns are accepted within 30 days of purchase. Contact support@nimbusgear.example.com for an RMA. [warranty.md]\" The answer is grounded + cited!" },
         { node: "sources", paths: ["sources-answer"], text: "We extract unique sources from retrieved chunks: [\"docs/warranty.md\"]. Append to answer or display separately. User sees: Answer + Sources. Trust = 100%." },
-        { node: "answer", paths: [], text: "Output: \"Returns are accepted within 30 days of purchase. Contact support@nimbusgear.example.com for an RMA.\" Sources: [warranty.md]. Filtered retrieval + citations = surgical precision. °" },
+        { node: "answer", paths: [], text: "Output: \"Returns are accepted within 30 days of purchase. Contact support@nimbusgear.example.com for an RMA.\" Sources: [warranty.md]. Filtered retrieval + citations = surgical precision. ‚ùì" },
       ],
     },
   ],
@@ -92,21 +92,21 @@ const NAV = [
   { id: "debugging", label: "Debugging the Pipeline" },
   { id: "lab", label: "Lab Exercise" },
   { id: "interview", label: "Interview Questions" },
-  { id: "memorize", label: ">‡ Memorize This" },
+  { id: "memorize", label: "üß† Memorize This" },
 ];
 
 export default function PipelinePage() {
   return (
     <TopicShell
-      icon="<◊"
+      icon="üèó"
       title="The Full RAG Pipeline  End to End"
       gradientWord="Pipeline"
-      subtitle="Ingest í retrieve í prompt í generate í cite. This is the flagship topic: you'll build the complete NimbusBot RAG system from scratch. Every stage traced with real intermediate values. By the end, you'll have a working chatbot that answers from docs, cites sources, and says \"I don't know\" when it should. This is RAG done right."
+      subtitle="Ingest ‚ùì retrieve ‚ùì prompt ‚ùì generate ‚ùì cite. This is the flagship topic: you'll build the complete NimbusBot RAG system from scratch. Every stage traced with real intermediate values. By the end, you'll have a working chatbot that answers from docs, cites sources, and says \"I don't know\" when it should. This is RAG done right."
       nav={NAV}
-      badges={["= LCEL chain: retriever | prompt | LLM", "=¨ RAG prompt design", "=⁄ Citations + sources", ">Í Quick eval harness", "> Complete chatbot script"]}
-      next={{ icon: "=¨", label: "Conversational RAG  Memory", href: "/rag/conversational" }}
+      badges={["üîó LCEL chain: retriever | prompt | LLM", "üí¨ RAG prompt design", "üìö Citations + sources", "üß™ Quick eval harness", "ü§ñ Complete chatbot script"]}
+      next={{ icon: "üí¨", label: "Conversational RAG  Memory", href: "/rag/conversational" }}
       backHref="/rag"
-      backLabel=">ú RAG & LangChain"
+      backLabel="ü¶ú RAG & LangChain"
     >
       <AnimatedFlow {...DIAGRAM} />
 
@@ -118,16 +118,16 @@ export default function PipelinePage() {
         <Table
           head={["Stage", "What we built", "From which topic"]}
           rows={[
-            [<>1. <strong>Load & split</strong></>, <>DirectoryLoader í RecursiveCharacterTextSplitter í 11 chunks</>, "Loaders & Splitters (previous topic)"],
-            [<>2. <strong>Embed & store</strong></>, <>OpenAIEmbeddings í Chroma (persist to ./nimbus_db)</>, "Loaders & Splitters (previous topic)"],
-            [<>3. <strong>Retrieve</strong></>, <>Chroma.as_retriever(k=3) í similarity_search í top-3 chunks</>, "Retrievers (previous topic)"],
+            [<>1. <strong>Load & split</strong></>, <>DirectoryLoader ‚ùì RecursiveCharacterTextSplitter ‚ùì 11 chunks</>, "Loaders & Splitters (previous topic)"],
+            [<>2. <strong>Embed & store</strong></>, <>OpenAIEmbeddings ‚ùì Chroma (persist to ./nimbus_db)</>, "Loaders & Splitters (previous topic)"],
+            [<>3. <strong>Retrieve</strong></>, <>Chroma.as_retriever(k=3) ‚ùì similarity_search ‚ùì top-3 chunks</>, "Retrievers (previous topic)"],
             [<>4. <strong>Prompt</strong></>, <>ChatPromptTemplate with system instruction + context + question</>, "This topic P"],
             [<>5. <strong>Generate</strong></>, <>ChatOpenAI (gpt-4o-mini) reads context, generates answer</>, "This topic P"],
             [<>6. <strong>Parse & cite</strong></>, <>StrOutputParser extracts text; append sources from metadata</>, "This topic P"],
           ]}
         />
         <P>
-          The chain: <IC>Question í embed í retrieve top-k í format as context í prompt LLM í generate answer</IC>. Every RAG system follows this flow. Let&apos;s build it step by step. 
+          The chain: <IC>Question ‚ùì embed ‚ùì retrieve top-k ‚ùì format as context ‚ùì prompt LLM ‚ùì generate answer</IC>. Every RAG system follows this flow. Let&apos;s build it step by step. 
         </P>
       </Section>
 
@@ -197,7 +197,7 @@ Answer:`}
           ]}
         />
         <Callout type="tip">
-          =° <strong>Prompt engineering for RAG</strong>: The &quot;don&apos;t know&quot; instruction is NON-NEGOTIABLE. Without it, GPT-4o-mini will hallucinate ~30% of the time on off-topic questions. With it, hallucination drops to &lt;5%. Test both: ask a question NOT in your docs. A good RAG system says &quot;I don&apos;t know&quot;. A bad one invents an answer.
+          üí° <strong>Prompt engineering for RAG</strong>: The &quot;don&apos;t know&quot; instruction is NON-NEGOTIABLE. Without it, GPT-4o-mini will hallucinate ~30% of the time on off-topic questions. With it, hallucination drops to &lt;5%. Test both: ask a question NOT in your docs. A good RAG system says &quot;I don&apos;t know&quot;. A bad one invents an answer.
         </Callout>
       </Section>
 
@@ -233,7 +233,7 @@ Returns within 30 days.`}
           <strong>Why <IC>\n\n</IC> separators?</strong> Double-newline creates visual separation. The LLM sees 3 distinct facts. Single <IC>\n</IC> would blend them into one paragraph. Triple <IC>\n\n\n</IC> wastes tokens. Double is the sweet spot.
         </P>
         <Callout type="behind">
-          ô <strong>Optional enhancement</strong>: Add source tags to each chunk: <IC>f&quot;[Source: {`{doc.metadata[&apos;source&apos;]}`}] {`{doc.page_content}`}&quot;</IC>. The LLM can then cite sources in its answer: &quot;The battery lasts 28 minutes [manual.md].&quot; We&apos;ll implement this in the Citations section.
+          ‚ùì <strong>Optional enhancement</strong>: Add source tags to each chunk: <IC>f&quot;[Source: {`{doc.metadata[&apos;source&apos;]}`}] {`{doc.page_content}`}&quot;</IC>. The LLM can then cite sources in its answer: &quot;The battery lasts 28 minutes [manual.md].&quot; We&apos;ll implement this in the Citations section.
         </Callout>
       </Section>
 
@@ -298,7 +298,7 @@ print(answer)`}
           title="chain_explained.txt"
           runnable={false}
           code={`{"context": retriever | format_docs, "question": RunnablePassthrough()}
- ë                ë           ë                       ë
+ ‚ùì                ‚ùì           ‚ùì                       ‚ùì
  |                |           |                       |
  Creates a dict   retriever   pipe into format_docs   pass the input through unchanged
 
@@ -307,17 +307,17 @@ HOW IT WORKS:
 - This string flows into TWO branches in parallel:
 
   Branch 1: "context" key
-    í retriever.invoke("How long...") í [chunk1, chunk2, chunk3] (list[Document])
-    í format_docs([chunk1, chunk2, chunk3]) í "chunk1\\n\\nchunk2\\n\\nchunk3" (string)
+    ‚ùì retriever.invoke("How long...") ‚ùì [chunk1, chunk2, chunk3] (list[Document])
+    ‚ùì format_docs([chunk1, chunk2, chunk3]) ‚ùì "chunk1\\n\\nchunk2\\n\\nchunk3" (string)
 
   Branch 2: "question" key
-    í RunnablePassthrough() í "How long does the X1 battery last?" (unchanged)
+    ‚ùì RunnablePassthrough() ‚ùì "How long does the X1 battery last?" (unchanged)
 
 - Result: {"context": "chunk1\\n\\nchunk2\\n\\nchunk3", "question": "How long..."}
 
                                                                                 
 | prompt
-ë
+‚ùì
 pipe the dict into prompt.invoke(...)
 
 HOW IT WORKS:
@@ -327,7 +327,7 @@ HOW IT WORKS:
 
                                                                                 
 | llm
-ë
+‚ùì
 pipe the prompt into llm.invoke(...)
 
 HOW IT WORKS:
@@ -337,7 +337,7 @@ HOW IT WORKS:
 
                                                                                 
 | StrOutputParser()
-ë
+‚ùì
 pipe the AIMessage into parser
 
 HOW IT WORKS:
@@ -357,7 +357,7 @@ THE MAGIC OF LCEL:
 - Debugging: call each stage manually to see intermediate values.`}
         />
         <Callout type="note">
-          =Ã <strong>Why RunnablePassthrough()?</strong> The input (&quot;How long...&quot;) needs to flow to TWO places: (1) the retriever (to fetch chunks) and (2) the prompt (as the {`{question}`} variable). <IC>RunnablePassthrough()</IC> is a no-op: it takes the input and returns it unchanged. This lets us capture the question while also sending it to the retriever.
+          üóå <strong>Why RunnablePassthrough()?</strong> The input (&quot;How long...&quot;) needs to flow to TWO places: (1) the retriever (to fetch chunks) and (2) the prompt (as the {`{question}`} variable). <IC>RunnablePassthrough()</IC> is a no-op: it takes the input and returns it unchanged. This lets us capture the question while also sending it to the retriever.
         </Callout>
       </Section>
 
@@ -499,7 +499,7 @@ Sources: ['docs/manual.md', 'docs/faq.md']`}
           ]}
         />
         <Callout type="tip">
-          =° <strong>Best practice</strong>: Use approach 2 (programmatic). LLMs are unreliable at following citation instructions (~20% of the time they skip it). Programmatic citations = 100% reliable. You can ALSO include source tags in context (approach 1 format) as a hint to the LLM, then override with programmatic sources. Belt + suspenders.
+          üí° <strong>Best practice</strong>: Use approach 2 (programmatic). LLMs are unreliable at following citation instructions (~20% of the time they skip it). Programmatic citations = 100% reliable. You can ALSO include source tags in context (approach 1 format) as a hint to the LLM, then override with programmatic sources. Belt + suspenders.
         </Callout>
       </Section>
 
@@ -544,7 +544,7 @@ rag_stream_with_sources("How long does the battery last?")`}
 Sources: docs/manual.md, docs/faq.md`}
         />
         <Callout type="note">
-          =Ã <strong>Why retrieval isn&apos;t streamed</strong>: Retrieval is fast (~50-100ms for Chroma). Streaming retrieval adds complexity for no UX gain. Stream only the LLM output (1-3 seconds for a 50-token answer). The user sees: [retrieval happens] í [answer starts streaming immediately].
+          üóå <strong>Why retrieval isn&apos;t streamed</strong>: Retrieval is fast (~50-100ms for Chroma). Streaming retrieval adds complexity for no UX gain. Stream only the LLM output (1-3 seconds for a 50-token answer). The user sees: [retrieval happens] ‚ùì [answer starts streaming immediately].
         </Callout>
       </Section>
 
@@ -609,7 +609,7 @@ Score: 5/5`}
           ]}
         />
         <Callout type="tip">
-          =° <strong>Cost optimization</strong>: (1) Use gpt-4o-mini (10x cheaper than gpt-4o). (2) Keep k=3 (not k=10  more context = more input tokens). (3) Use smaller chunks (500 chars, not 2000). (4) Cache embeddings (we do: Chroma persist). For 99% of RAG apps, cost is NOT the bottleneck. Latency is  focus on that.
+          üí° <strong>Cost optimization</strong>: (1) Use gpt-4o-mini (10x cheaper than gpt-4o). (2) Keep k=3 (not k=10  more context = more input tokens). (3) Use smaller chunks (500 chars, not 2000). (4) Cache embeddings (we do: Chroma persist). For 99% of RAG apps, cost is NOT the bottleneck. Latency is  focus on that.
         </Callout>
       </Section>
 
@@ -687,17 +687,17 @@ You: quit
 Goodbye!`}
         />
         <P>
-          <strong>This is it!</strong> A working RAG chatbot in 40 lines. It answers from docs, cites nothing when it doesn&apos;t know, and runs locally. You&apos;ve built the full pipeline. <â
+          <strong>This is it!</strong> A working RAG chatbot in 40 lines. It answers from docs, cites nothing when it doesn&apos;t know, and runs locally. You&apos;ve built the full pipeline. üÜâ
         </P>
       </Section>
 
       {/* 11 */}
       <Section id="debugging" number="11" title="Debugging the Pipeline">
         <P>
-          When answers are wrong, debug in order: retrieval í prompt í LLM. Here&apos;s the triage ladder:
+          When answers are wrong, debug in order: retrieval ‚ùì prompt ‚ùì LLM. Here&apos;s the triage ladder:
         </P>
         <Callout type="mistake">
-          † <strong>Step 1: Print retrieved chunks</strong>
+          ‚ùì <strong>Step 1: Print retrieved chunks</strong>
         </Callout>
         <CodeBlock
           title="debug_retrieval.py"
@@ -723,10 +723,10 @@ Chunk 3 (source: docs/manual.md):
 Specs: Weight 795g, Range 5km, Flight time 28min, Max wind 38km/h...`}
         />
         <P>
-          <strong>Question to ask:</strong> Does chunk 1 or 2 contain the answer? If YES í retrieval is fine, move to step 2. If NO í retrieval failed (re-chunk? tune k? check embeddings?).
+          <strong>Question to ask:</strong> Does chunk 1 or 2 contain the answer? If YES ‚ùì retrieval is fine, move to step 2. If NO ‚ùì retrieval failed (re-chunk? tune k? check embeddings?).
         </P>
         <Callout type="mistake">
-          † <strong>Step 2: Print the final prompt</strong>
+          ‚ùì <strong>Step 2: Print the final prompt</strong>
         </Callout>
         <CodeBlock
           title="debug_prompt.py"
@@ -759,10 +759,10 @@ Answer:
 ================================================================================`}
         />
         <P>
-          <strong>Question to ask:</strong> Is the answer CLEARLY in the context? If YES í LLM should answer correctly. If it doesn&apos;t, the prompt instructions are weak (add more &quot;DO NOT hallucinate&quot; warnings). If NO í retrieval failed (go back to step 1).
+          <strong>Question to ask:</strong> Is the answer CLEARLY in the context? If YES ‚ùì LLM should answer correctly. If it doesn&apos;t, the prompt instructions are weak (add more &quot;DO NOT hallucinate&quot; warnings). If NO ‚ùì retrieval failed (go back to step 1).
         </P>
         <Callout type="mistake">
-          † <strong>Step 3: Only THEN blame the LLM</strong>
+          ‚ùì <strong>Step 3: Only THEN blame the LLM</strong>
         </Callout>
         <P>
           If steps 1-2 look good but the answer is still wrong, it&apos;s an LLM issue. Try: (1) temperature=0 (more deterministic), (2) stronger model (gpt-4o instead of gpt-4o-mini), (3) rephrased prompt, (4) few-shot examples in the prompt.
@@ -771,13 +771,13 @@ Answer:
           head={["Symptom", "Root cause", "Fix"]}
           rows={[
             ["Answer is wrong but retrieval looks good", "LLM misread the context OR prompt is unclear", "Print the prompt. Check if instructions are explicit. Try temperature=0. Try gpt-4o."],
-            ["Answer is \"I don't know\" but the answer IS in the chunks", "LLM is being overly cautious (system instruction too strong)", <>Soften the instruction: &quot;If the answer is not CLEARLY in the context...&quot; í &quot;If you can&apos;t find the answer...&quot;</>],
+            ["Answer is \"I don't know\" but the answer IS in the chunks", "LLM is being overly cautious (system instruction too strong)", <>Soften the instruction: &quot;If the answer is not CLEARLY in the context...&quot; ‚ùì &quot;If you can&apos;t find the answer...&quot;</>],
             ["Answer is off-topic / hallucinated", "LLM ignored the context (retrieval returned low-relevance chunks)", "Check retrieval (step 1). If chunks are bad, re-chunk or tune k. If chunks are good, strengthen prompt: \"ONLY use the context. Ignore your training data.\""],
             ["Answer is correct but cites wrong source", "Metadata is wrong OR you're using LLM citations (unreliable)", "Use programmatic citations (approach 2 from Citations section). Don't trust LLM to cite correctly."],
           ]}
         />
         <Callout type="tip">
-          =° <strong>The debugging mantra</strong>: Print retrieved chunks FIRST. 90% of RAG bugs are bad retrieval (chunks don&apos;t contain the answer). Only 10% are LLM issues. Don&apos;t waste time tuning prompts if retrieval is broken.
+          üí° <strong>The debugging mantra</strong>: Print retrieved chunks FIRST. 90% of RAG bugs are bad retrieval (chunks don&apos;t contain the answer). Only 10% are LLM issues. Don&apos;t waste time tuning prompts if retrieval is broken.
         </Callout>
       </Section>
 
@@ -836,7 +836,7 @@ REFLECTION:
 - Did retrieval find the right chunks for "Follow-Me"? (print chunks to verify)
 - What happens if you ask about version 2.2? (not in docs  test "I don't know")
 
-This exercise shows the full loop: add docs í re-ingest í query í verify.
+This exercise shows the full loop: add docs ‚ùì re-ingest ‚ùì query ‚ùì verify.
 In production, you'd automate re-ingestion (daily cron job, webhook on doc updates).`}
         />
       </Section>
@@ -846,22 +846,22 @@ In production, you'd automate re-ingestion (daily cron job, webhook on doc updat
         <Table
           head={["Question", "Strong answer"]}
           rows={[
-            ["Walk me through a RAG system end-to-end.", "RAG has 3 stages: (1) Ingest: load docs í split into chunks í embed í store in vectorstore (one-time setup). (2) Retrieve: embed user question í similarity search vectorstore í return top-k chunks. (3) Generate: format chunks as context í prompt LLM (\"answer using ONLY context\") í LLM generates answer. The key: LLM never sees the full docs, only the relevant chunks retrieved for each question."],
+            ["Walk me through a RAG system end-to-end.", "RAG has 3 stages: (1) Ingest: load docs ‚ùì split into chunks ‚ùì embed ‚ùì store in vectorstore (one-time setup). (2) Retrieve: embed user question ‚ùì similarity search vectorstore ‚ùì return top-k chunks. (3) Generate: format chunks as context ‚ùì prompt LLM (\"answer using ONLY context\") ‚ùì LLM generates answer. The key: LLM never sees the full docs, only the relevant chunks retrieved for each question."],
             ["What does the RAG prompt do?", "The RAG prompt has 3 parts: (1) System instruction (role: \"You are a support assistant\"), (2) Context (the retrieved chunks formatted as text), (3) Question. The critical instruction: \"Answer using ONLY the context. If not in context, say 'I don't know.'\" This grounds the LLM and prevents hallucinations. Without this, the LLM will use its training data and invent answers."],
-            [<>What is <IC>format_docs</IC> for?</>, <>The retriever returns <IC>list[Document]</IC>. The prompt expects a string. <IC>format_docs</IC> joins chunks with <IC>\n\n</IC> separators into one context string. Example: 3 chunks í &quot;chunk1\n\nchunk2\n\nchunk3&quot;. This string is injected into the prompt&apos;s <IC>{`{context}`}</IC> placeholder.</>],
-            [<>Explain the LCEL chain: <IC>{`{&quot;context&quot;: retriever | format_docs, &quot;question&quot;: RunnablePassthrough()}`}</IC></>, <>This creates a dict with 2 keys. The input (question string) flows into both branches in parallel. Branch 1 (context): retriever.invoke(question) í list[Document] í format_docs í string. Branch 2 (question): RunnablePassthrough() í question (unchanged). Result: <IC>{`{&quot;context&quot;: &quot;chunk1\n\nchunk2...&quot;, &quot;question&quot;: &quot;How long...&quot;}`}</IC>. This dict is piped into the prompt.</>],
-            ["Why is temperature=0 recommended for RAG?", "temperature=0 makes the LLM deterministic (same input í same output). For RAG, you want consistent, factual answers from the context. temperature > 0 adds randomness  the LLM might paraphrase differently each time, or worse, hallucinate. RAG is about grounding in facts, not creativity. Use temperature=0."],
-            ["How do you add citations to RAG answers?", "Two approaches: (1) Instruct the LLM to cite (add \"cite sources in brackets\" to prompt + tag chunks with [source: manual.md] in context). Unreliable  LLM forgets ~20% of the time. (2) Programmatic: retrieve chunks í extract unique metadata.source í append to answer. Recommended. You get 100% reliable citations: Answer + Sources: [manual.md, faq.md]."],
+            [<>What is <IC>format_docs</IC> for?</>, <>The retriever returns <IC>list[Document]</IC>. The prompt expects a string. <IC>format_docs</IC> joins chunks with <IC>\n\n</IC> separators into one context string. Example: 3 chunks ‚ùì &quot;chunk1\n\nchunk2\n\nchunk3&quot;. This string is injected into the prompt&apos;s <IC>{`{context}`}</IC> placeholder.</>],
+            [<>Explain the LCEL chain: <IC>{`{&quot;context&quot;: retriever | format_docs, &quot;question&quot;: RunnablePassthrough()}`}</IC></>, <>This creates a dict with 2 keys. The input (question string) flows into both branches in parallel. Branch 1 (context): retriever.invoke(question) ‚ùì list[Document] ‚ùì format_docs ‚ùì string. Branch 2 (question): RunnablePassthrough() ‚ùì question (unchanged). Result: <IC>{`{&quot;context&quot;: &quot;chunk1\n\nchunk2...&quot;, &quot;question&quot;: &quot;How long...&quot;}`}</IC>. This dict is piped into the prompt.</>],
+            ["Why is temperature=0 recommended for RAG?", "temperature=0 makes the LLM deterministic (same input ‚ùì same output). For RAG, you want consistent, factual answers from the context. temperature > 0 adds randomness  the LLM might paraphrase differently each time, or worse, hallucinate. RAG is about grounding in facts, not creativity. Use temperature=0."],
+            ["How do you add citations to RAG answers?", "Two approaches: (1) Instruct the LLM to cite (add \"cite sources in brackets\" to prompt + tag chunks with [source: manual.md] in context). Unreliable  LLM forgets ~20% of the time. (2) Programmatic: retrieve chunks ‚ùì extract unique metadata.source ‚ùì append to answer. Recommended. You get 100% reliable citations: Answer + Sources: [manual.md, faq.md]."],
             ["What's the cost of a RAG query?", "Per query: (1) Embed question: ~10 tokens * $0.00002/1K H $0.0000002. (2) Retrieve: free (local similarity search). (3) LLM: ~650 input tokens (context + prompt) * $0.00015/1K + 50 output tokens * $0.0006/1K H $0.00015. Total: ~$0.00015/query. For 1,000 queries/day: $0.15/day = $4.50/month. Cheap!"],
-            ["How do you debug wrong RAG answers?", "Triage ladder: (1) Print retrieved chunks. Do they contain the answer? If NO í retrieval failed (re-chunk, tune k, check embeddings). If YES í move to (2). (2) Print the final prompt. Is the answer clearly in the context? If NO í retrieval is bad. If YES í move to (3). (3) LLM issue: try temperature=0, stronger model (gpt-4o), or rephrase prompt. 90% of bugs are step 1 (bad retrieval)."],
-            ["Why say 'I don't know' instead of hallucinating?", "Hallucinated answers erode trust. A user asks about a feature not in docs. If the LLM invents a plausible answer (\"Yes, the X1 has obstacle avoidance\"), the user might make a purchase decision based on false info. One hallucination í lost customer. \"I don't know\" is honest. The user trusts future answers. For support/docs RAG, honesty > helpfulness."],
+            ["How do you debug wrong RAG answers?", "Triage ladder: (1) Print retrieved chunks. Do they contain the answer? If NO ‚ùì retrieval failed (re-chunk, tune k, check embeddings). If YES ‚ùì move to (2). (2) Print the final prompt. Is the answer clearly in the context? If NO ‚ùì retrieval is bad. If YES ‚ùì move to (3). (3) LLM issue: try temperature=0, stronger model (gpt-4o), or rephrase prompt. 90% of bugs are step 1 (bad retrieval)."],
+            ["Why say 'I don't know' instead of hallucinating?", "Hallucinated answers erode trust. A user asks about a feature not in docs. If the LLM invents a plausible answer (\"Yes, the X1 has obstacle avoidance\"), the user might make a purchase decision based on false info. One hallucination ‚ùì lost customer. \"I don't know\" is honest. The user trusts future answers. For support/docs RAG, honesty > helpfulness."],
             [<>What does <IC>create_retrieval_chain</IC> do?</>, <>A helper that builds the RAG chain for you: <IC>create_retrieval_chain(retriever, combine_docs_chain)</IC>. It returns a chain that: (1) retrieves chunks, (2) formats them into a prompt, (3) calls the LLM, (4) returns a dict with <IC>answer</IC> and <IC>context</IC> (the retrieved chunks). Less flexible than LCEL but faster to prototype. LCEL is preferred for production (easier to customize).</>],
           ]}
         />
       </Section>
 
       {/* 14 */}
-      <Section id="memorize" number="14" title=">‡ Memorize This">
+      <Section id="memorize" number="14" title="üß† Memorize This">
         <MemorizeGrid
           items={[
             ["RAG prompt template", 'ChatPromptTemplate.from_template("You are X. Answer using ONLY context. If not in context, say \\"I don\'t know.\\"\\n\\nContext: {context}\\n\\nQuestion: {question}")'],

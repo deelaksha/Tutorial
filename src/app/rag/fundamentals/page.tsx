@@ -5,15 +5,15 @@ import { Section, CodeBlock, Callout, P, IC, Table } from "@/components/ui";
 import { AnimatedFlow } from "@/components/animated-flow";
 
 const DIAGRAM = {
-  title: "RAG in action: retrieve í generate",
+  title: "RAG in action: retrieve ‚ùì generate",
   nodes: [
     { id: "question", icon: "S", label: "User Question", sub: "battery query", x: 8, y: 50, color: "#22d3ee" },
-    { id: "embed", icon: ">Ú", label: "Embed Query", sub: "text í vector", x: 28, y: 50, color: "#a78bfa" },
-    { id: "search", icon: "=", label: "Vector Search", sub: "find chunks", x: 48, y: 50, color: "#fb923c" },
-    { id: "manual", icon: "=ƒ", label: "manual.md", sub: "28 min chunk", x: 48, y: 16, color: "#34d399" },
-    { id: "faq", icon: "=ƒ", label: "faq.md", sub: "", x: 48, y: 84, color: "#34d399" },
-    { id: "prompt", icon: "=›", label: "Stuff Context", sub: "build prompt", x: 68, y: 50, color: "#fbbf24" },
-    { id: "llm", icon: ">", label: "LLM (gpt-4o-mini)", sub: "generate answer", x: 88, y: 50, color: "#60a5fa" },
+    { id: "embed", icon: "üß≤", label: "Embed Query", sub: "text ‚ùì vector", x: 28, y: 50, color: "#a78bfa" },
+    { id: "search", icon: "üîç", label: "Vector Search", sub: "find chunks", x: 48, y: 50, color: "#fb923c" },
+    { id: "manual", icon: "üìÑ", label: "manual.md", sub: "28 min chunk", x: 48, y: 16, color: "#34d399" },
+    { id: "faq", icon: "üìÑ", label: "faq.md", sub: "", x: 48, y: 84, color: "#34d399" },
+    { id: "prompt", icon: "üìù", label: "Stuff Context", sub: "build prompt", x: 68, y: 50, color: "#fbbf24" },
+    { id: "llm", icon: "ü§ñ", label: "LLM (gpt-4o-mini)", sub: "generate answer", x: 88, y: 50, color: "#60a5fa" },
   ],
   edges: [
     { id: "q-embed", from: "question", to: "embed", color: "#22d3ee" },
@@ -27,7 +27,7 @@ const DIAGRAM = {
   flows: [
     {
       id: "happy",
-      name: " Battery question í correct 28 min",
+      name: " Battery question ‚ùì correct 28 min",
       command: "How long does the X1 battery last?",
       steps: [
         { node: "question", paths: ["q-embed"], text: "User asks: 'How long does the X1 battery last?'  This is the test question we care about. WITHOUT RAG, the model often hallucinates. WITH RAG, we retrieve the real answer from our docs." },
@@ -36,12 +36,12 @@ const DIAGRAM = {
         { node: "manual", paths: ["manual-prompt"], text: "Retrieved chunk: 'Nimbus X1 battery provides 28 minutes of flight time on a full charge.' This is REAL data from our docs  no hallucination possible." },
         { node: "prompt", paths: ["prompt-llm"], text: "Build prompt: System: 'You are NimbusBot. Answer ONLY from the context.' User: 'Context: [retrieved chunk]\\n\\nQuestion: How long does the X1 battery last?' We STUFF the retrieved chunk into the prompt." },
         { node: "llm", paths: ["llm-back"], text: "LLM generates: 'The Nimbus X1 battery lasts about 28 minutes on a full charge.' CORRECT! The model read the context, not hallucination. This is grounded generation." },
-        { node: "question", paths: [], text: "User receives accurate answer with citation. RAG success: retrieve relevant docs í generate grounded answer. The LLM never 'knew' this fact  we fed it at query time. " },
+        { node: "question", paths: [], text: "User receives accurate answer with citation. RAG success: retrieve relevant docs ‚ùì generate grounded answer. The LLM never 'knew' this fact  we fed it at query time. " },
       ],
     },
     {
       id: "fail",
-      name: "L No RAG í hallucination",
+      name: "L No RAG ‚ùì hallucination",
       command: "How long does the X1 battery last? (no retrieval)",
       steps: [
         { node: "question", paths: ["q-embed"], text: "Same question: 'How long does the X1 battery last?'  But imagine we SKIP retrieval (no RAG). We just ask the LLM directly." },
@@ -49,13 +49,13 @@ const DIAGRAM = {
         { node: "search", paths: [], text: "No search happens. The LLM has ZERO access to manual.md, faq.md, warranty.md. It only knows what it learned during training (frozen, months old, generic)." },
         { node: "manual", paths: [], text: "The correct chunk (28 min) sits unused in our docs. The LLM never sees it. This is the tragedy: the answer exists, but the model can't access it." },
         { node: "prompt", paths: ["prompt-llm"], text: "Prompt is just: 'User: How long does the X1 battery last?'  no context. The LLM is flying blind. It has no grounding, no facts, no Nimbus Gear docs." },
-        { node: "llm", paths: ["llm-back"], text: "LLM generates: 'The Nimbus X1 battery typically lasts about 45 minutes.' WRONG! It hallucinated a plausible-sounding but INCORRECT number. This is why we need RAG. =®" },
+        { node: "llm", paths: ["llm-back"], text: "LLM generates: 'The Nimbus X1 battery typically lasts about 45 minutes.' WRONG! It hallucinated a plausible-sounding but INCORRECT number. This is why we need RAG. üñ®" },
         { node: "question", paths: [], text: "User receives wrong answer (45 min instead of 28). No citation, no grounding. This is hallucination in action. RAG fixes this by ALWAYS retrieving real docs before generating. L" },
       ],
     },
     {
       id: "power",
-      name: "° Follow-up with chat history",
+      name: "‚ùì Follow-up with chat history",
       command: "Can I fly it in wind? (context from previous turn)",
       steps: [
         { node: "question", paths: ["q-embed"], text: "User asks a follow-up: 'Can I fly it in wind?'  'it' refers to the X1 from the previous question. We need to carry chat history for context." },
@@ -63,7 +63,7 @@ const DIAGRAM = {
         { node: "search", paths: ["search-manual"], text: "Vector search with the rephrased/contextualized query. The manual chunk about 'max wind resistance 38 km/h' scores highest. Retrieval adapts to conversation context." },
         { node: "manual", paths: ["manual-prompt"], text: "Retrieved chunk: 'The Nimbus X1 can handle winds up to 38 km/h. Avoid flying in stronger gusts.' This is the wind spec from our docs." },
         { node: "prompt", paths: ["prompt-llm"], text: "Build prompt with FULL chat history (previous Q&A) + new context chunk + new question. The LLM sees the conversation thread, knows 'it' = X1, and has the wind spec." },
-        { node: "llm", paths: ["llm-back"], text: "LLM generates: 'Yes, the X1 can handle winds up to 38 km/h. Stronger winds are not recommended.' CORRECT, contextual, grounded. Multi-turn RAG works! °" },
+        { node: "llm", paths: ["llm-back"], text: "LLM generates: 'Yes, the X1 can handle winds up to 38 km/h. Stronger winds are not recommended.' CORRECT, contextual, grounded. Multi-turn RAG works! ‚ùì" },
         { node: "question", paths: [], text: "User gets a natural, conversational answer that references the previous topic. This is advanced RAG: chat history + retrieval + generation. Coming in later chapters." },
       ],
     },
@@ -84,21 +84,21 @@ const NAV = [
   { id: "misconceptions", label: "Common Misconceptions" },
   { id: "lab", label: "Lab Exercise" },
   { id: "interview", label: "Interview Questions" },
-  { id: "memorize", label: ">‡ Memorize This" },
+  { id: "memorize", label: "üß† Memorize This" },
 ];
 
 export default function RagFundamentalsPage() {
   return (
     <TopicShell
-      icon=">‡"
+      icon="üß†"
       title="RAG from Zero  Why LLMs Need Retrieval"
       gradientWord="RAG"
       subtitle="LLMs are powerful, but they hallucinate. They don't know YOUR data. RAG (Retrieval-Augmented Generation) solves this: retrieve relevant chunks from your docs, then let the LLM generate grounded answers. You'll learn the core idea, see the two-phase architecture, and build a toy RAG system in pure Python  zero libraries, zero APIs, just the concept."
       nav={NAV}
-      badges={[">‡ Concepts first", "= Pure Python toy", "=° Zero to RAG", "<§ Interview-ready"]}
-      next={{ icon: ">", label: "Calling LLMs from Python", href: "/rag/llm-apis" }}
+      badges={["üß† Concepts first", "üîç Pure Python toy", "üí° Zero to RAG", "üé§ Interview-ready"]}
+      next={{ icon: "ü§ñ", label: "Calling LLMs from Python", href: "/rag/llm-apis" }}
       backHref="/rag"
-      backLabel=">ú RAG & LangChain"
+      backLabel="ü¶ú RAG & LangChain"
     >
       <AnimatedFlow {...DIAGRAM} />
 
@@ -123,26 +123,26 @@ LLM (without RAG):
 WHY THIS HAPPENS:
 
 1. The LLM was trained on public internet data (Wikipedia, GitHub, etc.)
-   í It NEVER saw your manual.md (your private company docs).
+   ‚ùì It NEVER saw your manual.md (your private company docs).
 
 2. Training data is a FROZEN SNAPSHOT (e.g., data up to Jan 2024).
-   í If you updated the spec yesterday, the model can't know.
+   ‚ùì If you updated the spec yesterday, the model can't know.
 
 3. LLMs predict the next token based on patterns.
-   í "battery lasts about X minutes" í X is often 30-60 for drones.
-   í The model fills in a statistically plausible number.
+   ‚ùì "battery lasts about X minutes" ‚ùì X is often 30-60 for drones.
+   ‚ùì The model fills in a statistically plausible number.
 
 4. The model has NO MEMORY of your docs.
-   í It can't look up facts. It only "remembers" patterns from training.
+   ‚ùì It can't look up facts. It only "remembers" patterns from training.
 
                                                                 
 THE REAL SPEC (from manual.md):
   "Nimbus X1 battery: 28 minutes flight time on full charge."
 
-The model SHOULD say 28, but it CAN'T  it doesn't have access. =®`}
+The model SHOULD say 28, but it CAN'T  it doesn't have access. üñ®`}
         />
         <Callout type="mistake">
-          † <strong>Hallucination = confident wrongness</strong>. The LLM doesn&apos;t say &quot;I don&apos;t know.&quot; It generates a fluent, confident answer that SOUNDS right but is factually wrong. This breaks trust. Users assume it&apos;s correct. RAG fixes this by grounding answers in YOUR real docs.
+          ‚ùì <strong>Hallucination = confident wrongness</strong>. The LLM doesn&apos;t say &quot;I don&apos;t know.&quot; It generates a fluent, confident answer that SOUNDS right but is factually wrong. This breaks trust. Users assume it&apos;s correct. RAG fixes this by grounding answers in YOUR real docs.
         </Callout>
         <P>
           The root cause: <strong>LLMs don&apos;t have access to YOUR data</strong>. They only know what they learned during training (months ago, on public data). Your company docs, your database, your PDFs  invisible to the model.
@@ -166,14 +166,14 @@ Given: "How long does the X1 battery"
 Predict next token: "last"
 
 Given: "How long does the X1 battery last?"
-Predict next token: "About" í "45" í "minutes" í ...
+Predict next token: "About" ‚ùì "45" ‚ùì "minutes" ‚ùì ...
 
                                                                 
 TOKENS = CHUNKS OF TEXT
 
 Text: "How long does the X1 battery last?"
 Tokens: ["How", " long", " does", " the", " X", "1", " battery", " last", "?"]
-         ë      ë        ë       ë     ë   ë    ë         ë      ë
+         ‚ùì      ‚ùì        ‚ùì       ‚ùì     ‚ùì   ‚ùì    ‚ùì         ‚ùì      ‚ùì
       ~9 tokens (depends on tokenizer; spaces count)
 
 A token H a word or part of a word. Numbers, punctuation = separate tokens.
@@ -186,11 +186,11 @@ It outputs: P(next token | prompt).
 
 Example:
   Prompt: "The capital of France is"
-  P("Paris") = 0.87  ê most likely
+  P("Paris") = 0.87  ‚ùì most likely
   P("Lyon")  = 0.05
   P("Berlin")= 0.02
 
-It SAMPLES from this distribution í picks "Paris" (highest prob).
+It SAMPLES from this distribution ‚ùì picks "Paris" (highest prob).
 
                                                                 
 TRAINING = LEARNING PATTERNS FROM TEXT
@@ -203,7 +203,7 @@ The model read billions of sentences:
 It learned: after "capital of France is", say "Paris" (high probability).
 
 BUT: It NEVER learned "Nimbus X1 battery = 28 minutes" (not in training data).
-  í So it guesses. And guesses wrong. =®
+  ‚ùì So it guesses. And guesses wrong. üñ®
 
                                                                 
 KEY INSIGHT:
@@ -215,7 +215,7 @@ To make it answer YOUR questions with YOUR data, you must FEED that data
 into the prompt at query time. That's what RAG does. `}
         />
         <Callout type="analogy">
-          < <strong>Library analogy</strong>: Imagine a librarian who memorized summaries of 10,000 books years ago. You ask: &quot;What&apos;s on page 42 of this new book I just published?&quot; She can&apos;t answer  she never read your book. She might guess based on similar books (hallucinate). To get the right answer, you&apos;d hand her your book and say &quot;read page 42, then answer.&quot; That&apos;s RAG.
+          üÑç <strong>Library analogy</strong>: Imagine a librarian who memorized summaries of 10,000 books years ago. You ask: &quot;What&apos;s on page 42 of this new book I just published?&quot; She can&apos;t answer  she never read your book. She might guess based on similar books (hallucinate). To get the right answer, you&apos;d hand her your book and say &quot;read page 42, then answer.&quot; That&apos;s RAG.
         </Callout>
       </Section>
 
@@ -257,7 +257,7 @@ messages = [
 # - Your database
 
 # It's STATELESS. Every request is isolated.
-# You must INCLUDE all relevant info in the prompt. <Ø`}
+# You must INCLUDE all relevant info in the prompt. üéØ`}
           output={`(no output  this is a conceptual demo)`}
           runnable={false}
         />
@@ -307,13 +307,13 @@ print(response.choices[0].message.content)`}
           head={["Problem", "Why it breaks at scale"]}
           rows={[
             [<><strong>Context limit</strong></>, <>You have 100 docs (1M tokens total). The window is 128K. You <strong>can&apos;t fit everything</strong>. Even if you could, most of it is irrelevant (e.g., warranty policy when the user asks about battery).</>],
-            [<><strong>Cost</strong></>, <>gpt-4o-mini: $0.15 per 1M input tokens. If you paste 100K tokens every request (100 docs), that&apos;s $0.015 per call. 1000 calls = $15. With retrieval, you paste only 2K tokens (2 relevant chunks) í $0.0003 per call. 50x cheaper.</>],
+            [<><strong>Cost</strong></>, <>gpt-4o-mini: $0.15 per 1M input tokens. If you paste 100K tokens every request (100 docs), that&apos;s $0.015 per call. 1000 calls = $15. With retrieval, you paste only 2K tokens (2 relevant chunks) ‚ùì $0.0003 per call. 50x cheaper.</>],
             [<><strong>Speed</strong></>, <>Longer context = slower. Reading 100K tokens takes ~5-10 seconds. Reading 2K tokens takes ~1 second. Users expect instant answers.</>],
             [<><strong>Quality</strong></>, <>LLMs lose focus in long contexts (&quot;lost in the middle&quot; problem). If the answer is buried in token 80,000, the model might miss it. Shorter, focused context = better answers.</>],
           ]}
         />
         <Callout type="tip">
-          =° <strong>The naive fix works for SMALL doc sets</strong> (e.g., 1-3 short docs that fit in ~10K tokens). For anything larger, you need retrieval. RAG = smart, scalable version of &quot;paste the docs.&quot;
+          üí° <strong>The naive fix works for SMALL doc sets</strong> (e.g., 1-3 short docs that fit in ~10K tokens). For anything larger, you need retrieval. RAG = smart, scalable version of &quot;paste the docs.&quot;
         </Callout>
       </Section>
 
@@ -328,8 +328,8 @@ print(response.choices[0].message.content)`}
           code={`1. User asks a question: "How long does the X1 battery last?"
 
 2. RETRIEVE: Search your docs for RELEVANT chunks.
-     í Input: question
-     í Output: top 2-3 chunks (e.g., manual excerpt about battery)
+     ‚ùì Input: question
+     ‚ùì Output: top 2-3 chunks (e.g., manual excerpt about battery)
 
 3. STUFF: Build a prompt with the retrieved chunks + question.
      messages = [
@@ -338,7 +338,7 @@ print(response.choices[0].message.content)`}
      ]
 
 4. GENERATE: Call the LLM. It reads the context, generates an answer.
-     í Output: "The X1 battery lasts 28 minutes."
+     ‚ùì Output: "The X1 battery lasts 28 minutes."
 
                                                                 
 KEY IDEA:
@@ -361,13 +361,13 @@ WHY IT WORKS:
 THE MAGIC:
 
 HOW do we "search for relevant chunks"?
-  í Embeddings + vector search (Chapter 3: Embeddings).
+  ‚ùì Embeddings + vector search (Chapter 3: Embeddings).
 
 For now, understand the FLOW:
-  Question í Retrieve í Stuff í Generate í Answer `}
+  Question ‚ùì Retrieve ‚ùì Stuff ‚ùì Generate ‚ùì Answer `}
         />
         <Callout type="analogy">
-          < <strong>Librarian analogy</strong>: You ask a librarian: &quot;What&apos;s the X1 battery life?&quot; She doesn&apos;t read all 10,000 books. She searches the index, finds the 2 relevant pages (manual p.14, FAQ p.3), hands them to you, and says &quot;read these.&quot; You read those 2 pages and answer. That&apos;s RAG. The librarian = retrieval. You reading = LLM generating from context.
+          üÑç <strong>Librarian analogy</strong>: You ask a librarian: &quot;What&apos;s the X1 battery life?&quot; She doesn&apos;t read all 10,000 books. She searches the index, finds the 2 relevant pages (manual p.14, FAQ p.3), hands them to you, and says &quot;read these.&quot; You read those 2 pages and answer. That&apos;s RAG. The librarian = retrieval. You reading = LLM generating from context.
         </Callout>
         <P>
           RAG is <strong>not</strong> a new model type. It&apos;s a <strong>design pattern</strong>. You use a normal LLM (gpt-4o-mini, Claude, Llama) + a search step. The LLM doesn&apos;t change. You change the PROMPT (add retrieved context).
@@ -388,19 +388,19 @@ Goal: Prepare your docs for search.
 
 Steps:
   1. LOAD documents (manual.md, faq.md, warranty.md)
-     í Raw text files, PDFs, web scrapes, etc.
+     ‚ùì Raw text files, PDFs, web scrapes, etc.
 
   2. SPLIT into chunks (e.g., 500-word paragraphs)
-     í Why? Embeddings work best on paragraph-sized text.
-     í Example: manual.md (10 pages) í 20 chunks.
+     ‚ùì Why? Embeddings work best on paragraph-sized text.
+     ‚ùì Example: manual.md (10 pages) ‚ùì 20 chunks.
 
-  3. EMBED each chunk (text í vector of 1536 floats)
-     í Use OpenAI's text-embedding-3-small API.
-     í Each chunk becomes a point in 1536-dimensional space.
+  3. EMBED each chunk (text ‚ùì vector of 1536 floats)
+     ‚ùì Use OpenAI's text-embedding-3-small API.
+     ‚ùì Each chunk becomes a point in 1536-dimensional space.
 
   4. STORE embeddings in a vector database (FAISS, Chroma, Pinecone)
-     í Index = {chunk_text, chunk_embedding}
-     í Now you can search by similarity.
+     ‚ùì Index = {chunk_text, chunk_embedding}
+     ‚ùì Now you can search by similarity.
 
 You do this ONCE (or when docs update). Result: a searchable index.
 
@@ -411,16 +411,16 @@ Goal: Answer a user question.
 
 Steps:
   1. EMBED the question ("How long does the X1 battery last?")
-     í Same embedding model (text-embedding-3-small).
-     í Question becomes a vector.
+     ‚ùì Same embedding model (text-embedding-3-small).
+     ‚ùì Question becomes a vector.
 
   2. SEARCH the index: find top K most similar chunks (K=2 or 3)
-     í Compare question vector vs all chunk vectors (cosine similarity).
-     í Top match: manual chunk about battery (score 0.89).
+     ‚ùì Compare question vector vs all chunk vectors (cosine similarity).
+     ‚ùì Top match: manual chunk about battery (score 0.89).
 
   3. RETRIEVE the text of those K chunks.
-     í chunk 1: "Nimbus X1 battery: 28 minutes flight time."
-     í chunk 2: "Charge time: 90 minutes with included adapter."
+     ‚ùì chunk 1: "Nimbus X1 battery: 28 minutes flight time."
+     ‚ùì chunk 2: "Charge time: 90 minutes with included adapter."
 
   4. STUFF chunks into the prompt:
      messages = [
@@ -429,7 +429,7 @@ Steps:
      ]
 
   5. GENERATE: Call LLM, get answer.
-     í "The X1 battery lasts 28 minutes."
+     ‚ùì "The X1 battery lasts 28 minutes."
 
   6. Return answer (+ optionally cite chunks).
 
@@ -439,13 +439,13 @@ INGEST vs QUERY:
 INGEST:  Slow, heavy (embed all docs), done ONCE.
 QUERY:   Fast, light (embed 1 question, search, generate), done EVERY time.
 
-You'll build both in later chapters. For now, remember the split. <Ø`}
+You'll build both in later chapters. For now, remember the split. üéØ`}
         />
         <Table
           head={["Phase", "When", "What happens", "Cost"]}
           rows={[
-            [<><strong>Ingest</strong></>, "Once (or when docs change)", <>Load í Split í Embed all chunks í Store in vector DB</>, <>One-time: e.g., 10K chunks ◊ $0.00002/chunk (embedding cost) = $0.20</>],
-            [<><strong>Query</strong></>, "Every user question", <>Embed question í Search top K í Stuff í Generate</>, <>Per request: ~$0.0003 (embedding) + ~$0.0006 (LLM) = ~$0.001</>],
+            [<><strong>Ingest</strong></>, "Once (or when docs change)", <>Load ‚ùì Split ‚ùì Embed all chunks ‚ùì Store in vector DB</>, <>One-time: e.g., 10K chunks ‚ùì $0.00002/chunk (embedding cost) = $0.20</>],
+            [<><strong>Query</strong></>, "Every user question", <>Embed question ‚ùì Search top K ‚ùì Stuff ‚ùì Generate</>, <>Per request: ~$0.0003 (embedding) + ~$0.0006 (LLM) = ~$0.001</>],
           ]}
         />
       </Section>
@@ -460,16 +460,16 @@ You'll build both in later chapters. For now, remember the split. <Ø`}
           rows={[
             [<><strong>What it does</strong></>, <>Retrieves docs at query time, pastes into prompt. LLM reads &amp; answers.</>, <>Re-trains the model on YOUR data. Model learns patterns, facts, style.</>],
             [<><strong>When to use</strong></>, <>You have KNOWLEDGE (docs, FAQs, manuals) the model must reference. Facts change often (new products, updated specs).</>, <>You want to change model BEHAVIOR (tone, format, reasoning style). Facts are stable (e.g., medical guidelines from 2020).</>],
-            [<><strong>Data freshness</strong></>, <> Fresh: Update docs í retrieval uses new data instantly (no retraining).</>, <>L Stale: Must re-train to update facts (slow, expensive).</>],
-            [<><strong>Cost</strong></>, <>=∞ Cheap: Embedding + inference = ~$0.001/query. No training cost.</>, <>=∞=∞=∞ Expensive: Training gpt-4o-mini = $0.60-$2/1K examples. Plus GPU time.</>],
-            [<><strong>Setup time</strong></>, <>Ò Fast: Ingest docs in minutes (embed + index). Query immediately.</>, <>ÒÒÒ Slow: Prepare training data (weeks), train (hours/days), evaluate.</>],
-            [<><strong>Transparency</strong></>, <> Explainable: You see which chunks were retrieved. You can cite sources.</>, <>L Black box: Model &quot;knows&quot; facts but can&apos;t show where it learned them.</>],
-            [<><strong>Hallucination risk</strong></>, <> Low: If you retrieve good chunks and prompt &quot;answer ONLY from context,&quot; the model stays grounded.</>, <>L High: Model might still hallucinate if training didn&apos;t cover the question.</>],
+            [<><strong>Data freshness</strong></>, <ü§Ö Fresh: Update docs ‚ùì retrieval uses new data instantly (no retraining).</>, <>L Stale: Must re-train to update facts (slow, expensive).</>],
+            [<><strong>Cost</strong></>, <>üí∞ Cheap: Embedding + inference = ~$0.001/query. No training cost.</>, <>üí∞üí∞üí∞ Expensive: Training gpt-4o-mini = $0.60-$2/1K examples. Plus GPU time.</>],
+            [<><strong>Setup time</strong></>, <üß± Fast: Ingest docs in minutes (embed + index). Query immediately.</>, <üß±‚ùì‚ùì Slow: Prepare training data (weeks), train (hours/days), evaluate.</>],
+            [<><strong>Transparency</strong></>, <ü§Ö Explainable: You see which chunks were retrieved. You can cite sources.</>, <>L Black box: Model &quot;knows&quot; facts but can&apos;t show where it learned them.</>],
+            [<><strong>Hallucination risk</strong></>, <ü§Ö Low: If you retrieve good chunks and prompt &quot;answer ONLY from context,&quot; the model stays grounded.</>, <>L High: Model might still hallucinate if training didn&apos;t cover the question.</>],
             [<><strong>Example use case</strong></>, <>Support chatbot (10K docs, updated weekly), internal knowledge base, Q&amp;A over PDFs.</>, <>Customer service tone (train model to be formal/friendly), code completion (train on your codebase style).</>],
           ]}
         />
         <Callout type="tip">
-          =° <strong>Rule of thumb</strong>: Use <strong>RAG</strong> for knowledge (facts, docs, changing data). Use <strong>fine-tuning</strong> for behavior (style, format, domain-specific reasoning). Often you do BOTH: fine-tune for tone, RAG for facts.
+          üí° <strong>Rule of thumb</strong>: Use <strong>RAG</strong> for knowledge (facts, docs, changing data). Use <strong>fine-tuning</strong> for behavior (style, format, domain-specific reasoning). Often you do BOTH: fine-tune for tone, RAG for facts.
         </Callout>
         <P>
           For NimbusBot (support chatbot answering from docs), <strong>RAG is the right choice</strong>. Facts change (new products, updated specs), we need citations, and we want low cost. Fine-tuning would be overkill.
@@ -515,7 +515,7 @@ Q: "How long does the X1 battery last?"
 A: "About 28 minutes on a full charge."
 
 This is the question we use to test RAG systems. The correct answer
-is 28 minutes. Any other number = hallucination or wrong retrieval. <Ø`}
+is 28 minutes. Any other number = hallucination or wrong retrieval. üéØ`}
         />
         <P>
           <strong>Tech stack (used across the course):</strong>
@@ -543,7 +543,7 @@ is 28 minutes. Any other number = hallucination or wrong retrieval. <Ø`}
         <Table
           head={["Term", "Definition"]}
           rows={[
-            [<><strong>Embedding</strong></>, <>A vector (list of floats, e.g., 1536 numbers) representing text. Similar text í similar vectors. Used for semantic search. Example: &quot;battery life&quot; and &quot;flight time&quot; have close embeddings.</>],
+            [<><strong>Embedding</strong></>, <>A vector (list of floats, e.g., 1536 numbers) representing text. Similar text ‚ùì similar vectors. Used for semantic search. Example: &quot;battery life&quot; and &quot;flight time&quot; have close embeddings.</>],
             [<><strong>Vector store / Vector DB</strong></>, <>A database optimized for storing &amp; searching embeddings. Examples: FAISS, Chroma, Pinecone, Weaviate. Supports similarity search (find top K nearest vectors).</>],
             [<><strong>Chunk</strong></>, <>A small piece of a document (e.g., 1 paragraph, 500 words, 1 page). You split docs into chunks before embedding. Why? Embeddings work best on focused text (not entire 50-page PDFs).</>],
             [<><strong>Retriever</strong></>, <>The component that searches the vector store. Input: query (text or embedding). Output: top K chunks (ranked by similarity). Example: &quot;battery&quot; query retrieves battery-related chunks.</>],
@@ -551,14 +551,14 @@ is 28 minutes. Any other number = hallucination or wrong retrieval. <Ø`}
             [<><strong>Grounding</strong></>, <>Making the LLM answer from PROVIDED context (retrieved docs) instead of guessing from training. Grounded answer = based on real chunks. Opposite = hallucination.</>],
             [<><strong>Hallucination</strong></>, <>When the LLM generates plausible but WRONG information (not in context, not factual). Example: &quot;X1 battery lasts 45 min&quot; (real = 28). RAG reduces hallucination by grounding.</>],
             [<><strong>Top-K retrieval</strong></>, <>Fetch the K most similar chunks (e.g., K=3). You don&apos;t retrieve ALL chunks (too many), just the top-scoring ones. Typical K: 2-5.</>],
-            [<><strong>Cosine similarity</strong></>, <>A metric to compare two vectors (0 = unrelated, 1 = identical). Used to rank chunks by relevance. Example: question embedding vs chunk embedding í score 0.89 (very relevant).</>],
+            [<><strong>Cosine similarity</strong></>, <>A metric to compare two vectors (0 = unrelated, 1 = identical). Used to rank chunks by relevance. Example: question embedding vs chunk embedding ‚ùì score 0.89 (very relevant).</>],
             [<><strong>Semantic search</strong></>, <>Search by MEANING, not keywords. Uses embeddings. Example: &quot;How long can it fly?&quot; retrieves &quot;battery flight time 28 minutes&quot; (different words, same meaning).</>],
-            [<><strong>INGEST</strong></>, <>The offline phase: load docs í split í embed í store. Done once (or when docs change). Prepares the retrieval index.</>],
-            [<><strong>QUERY</strong></>, <>The online phase: embed question í retrieve í stuff í generate. Done every user request. Fast (~1 sec).</>],
+            [<><strong>INGEST</strong></>, <>The offline phase: load docs ‚ùì split ‚ùì embed ‚ùì store. Done once (or when docs change). Prepares the retrieval index.</>],
+            [<><strong>QUERY</strong></>, <>The online phase: embed question ‚ùì retrieve ‚ùì stuff ‚ùì generate. Done every user request. Fast (~1 sec).</>],
           ]}
         />
         <Callout type="note">
-          =Ã <strong>Memorize these terms</strong>. Interviews, docs, papers all use this vocab. If someone says &quot;our retriever uses cosine similarity over text-embedding-3-small vectors&quot;, you now know exactly what that means.
+          üóå <strong>Memorize these terms</strong>. Interviews, docs, papers all use this vocab. If someone says &quot;our retriever uses cosine similarity over text-embedding-3-small vectors&quot;, you now know exactly what that means.
         </Callout>
       </Section>
 
@@ -613,30 +613,30 @@ q_words = set("how long does the x1 battery last?".lower().split())
 doc0_words = set("nimbus x1 battery provides 28 minutes of flight time on a full charge. charge time is 90 minutes.".lower().split())
 # doc0_words = {'nimbus', 'x1', 'battery', 'provides', '28', 'minutes', 'of', 'flight', 'time', 'on', 'a', 'full', 'charge.', 'charge', 'time', 'is', '90', 'minutes.'}
 
-overlap0 = len(q_words & doc0_words)  # shared: 'x1', 'battery' í overlap = 2
+overlap0 = len(q_words & doc0_words)  # shared: 'x1', 'battery' ‚ùì overlap = 2
 
 doc1_words = set("the x1 has a range of 5 km and weighs 795 grams. maximum wind resistance is 38 km/h.".lower().split())
-overlap1 = len(q_words & doc1_words)  # shared: 'the', 'x1' í overlap = 2
+overlap1 = len(q_words & doc1_words)  # shared: 'the', 'x1' ‚ùì overlap = 2
 
 doc2_words = set("warranty is 12 months. returns accepted within 30 days if unused and in original packaging.".lower().split())
-overlap2 = len(q_words & doc2_words)  # shared: (none) í overlap = 0
+overlap2 = len(q_words & doc2_words)  # shared: (none) ‚ùì overlap = 0
 
 # Doc 0 ties with Doc 1 (overlap=2), but Doc 0 comes first, so it wins.
 # Tie-breaking: first match wins (or use doc length, etc.).
 
-print("\\nScores: [2, 2, 0] í Doc 0 retrieved ")`}
+print("\\nScores: [2, 2, 0] ‚ùì Doc 0 retrieved ")`}
           output={`Question: How long does the X1 battery last?
 
 Retrieved chunk:
 Nimbus X1 battery provides 28 minutes of flight time on a full charge. Charge time is 90 minutes.
 
-Scores: [2, 2, 0] í Doc 0 retrieved `}
+Scores: [2, 2, 0] ‚ùì Doc 0 retrieved `}
         />
         <P>
-          <strong>What happened?</strong> The question shares 2 words with Doc 0 (&quot;x1&quot;, &quot;battery&quot;) and 2 with Doc 1 (&quot;the&quot;, &quot;x1&quot;). Tie í first wins. Doc 0 is the right chunk (contains &quot;28 minutes&quot;). <strong>Retrieval worked!</strong>
+          <strong>What happened?</strong> The question shares 2 words with Doc 0 (&quot;x1&quot;, &quot;battery&quot;) and 2 with Doc 1 (&quot;the&quot;, &quot;x1&quot;). Tie ‚ùì first wins. Doc 0 is the right chunk (contains &quot;28 minutes&quot;). <strong>Retrieval worked!</strong>
         </P>
         <Callout type="mistake">
-          † <strong>Keyword overlap FAILS on paraphrases</strong>. If the user asks &quot;How long can it fly?&quot; (different words, same meaning), this retriever scores 0 overlap with Doc 0. It would fail. <strong>Embeddings fix this</strong>  they capture meaning, not just keywords. Chapter 3 covers embeddings.
+          ‚ùì <strong>Keyword overlap FAILS on paraphrases</strong>. If the user asks &quot;How long can it fly?&quot; (different words, same meaning), this retriever scores 0 overlap with Doc 0. It would fail. <strong>Embeddings fix this</strong>  they capture meaning, not just keywords. Chapter 3 covers embeddings.
         </Callout>
         <P>
           This toy RAG is <strong>not production-ready</strong>, but it shows the <strong>core loop</strong>: rank docs by relevance, pick the top one, return it. Real RAG uses embeddings + vector search instead of keyword overlap.
@@ -646,31 +646,31 @@ Scores: [2, 2, 0] í Doc 0 retrieved `}
       {/* 11 */}
       <Section id="misconceptions" number="11" title="Common Misconceptions">
         <Callout type="mistake">
-          † <strong>Misconception 1: &quot;RAG retrains the LLM on my data.&quot;</strong>
+          ‚ùì <strong>Misconception 1: &quot;RAG retrains the LLM on my data.&quot;</strong>
         </Callout>
         <P>
           <strong>FALSE.</strong> RAG does <strong>NOT</strong> retrain the model. The model weights never change. You just <strong>change the PROMPT</strong> (add retrieved chunks). The LLM reads the chunks at inference time. No training, no fine-tuning, no gradient updates.
         </P>
         <Callout type="mistake">
-          † <strong>Misconception 2: &quot;The LLM searches the database.&quot;</strong>
+          ‚ùì <strong>Misconception 2: &quot;The LLM searches the database.&quot;</strong>
         </Callout>
         <P>
           <strong>FALSE.</strong> The LLM does <strong>NOT</strong> search. <strong>YOUR code</strong> (the retriever) searches the vector store, retrieves chunks, and pastes them into the prompt. The LLM just reads the prompt and generates text. It has no access to the database.
         </P>
         <Callout type="mistake">
-          † <strong>Misconception 3: &quot;RAG eliminates hallucination.&quot;</strong>
+          ‚ùì <strong>Misconception 3: &quot;RAG eliminates hallucination.&quot;</strong>
         </Callout>
         <P>
           <strong>PARTIALLY TRUE.</strong> RAG <strong>reduces</strong> hallucination by grounding answers in real chunks. BUT: if retrieval fails (wrong chunks), the LLM might still hallucinate. You must ensure good retrieval (chunk quality, embedding model, top-K tuning).
         </P>
         <Callout type="mistake">
-          † <strong>Misconception 4: &quot;Embeddings are just word counts.&quot;</strong>
+          ‚ùì <strong>Misconception 4: &quot;Embeddings are just word counts.&quot;</strong>
         </Callout>
         <P>
           <strong>FALSE.</strong> Embeddings capture <strong>semantic meaning</strong>, not word frequency. &quot;How long can it fly?&quot; and &quot;battery flight time&quot; share ZERO words, but their embeddings are close (high cosine similarity). Keyword search would miss this. Embeddings catch it.
         </P>
         <Callout type="tip">
-          =° <strong>What RAG IS</strong>: A design pattern where you retrieve relevant docs and paste them into the LLM prompt. What RAG ISN&apos;T: A model type, a training method, or a replacement for databases. It&apos;s middleware between your data and the LLM.
+          üí° <strong>What RAG IS</strong>: A design pattern where you retrieve relevant docs and paste them into the LLM prompt. What RAG ISN&apos;T: A model type, a training method, or a replacement for databases. It&apos;s middleware between your data and the LLM.
         </Callout>
       </Section>
 
@@ -742,9 +742,9 @@ LEARNING GOALS:
             ["Why do LLMs hallucinate?", "LLMs are trained on a frozen snapshot of public data. They never saw YOUR private docs (manuals, databases). When asked about facts not in training data, they guess based on patterns  generating plausible but wrong answers. RAG fixes this by feeding real docs at query time."],
             ["What is the context window?", "The input area where you paste messages (system, user, assistant). The LLM only sees what's in this window  it has zero access to your hard drive, the internet, or past conversations (unless you resend them). Context window size: e.g., 128K tokens for gpt-4o-mini."],
             ["Why not paste all docs into the prompt?", "Three reasons: (1) Context limit  you can't fit 10,000 docs (millions of tokens) in a 128K window. (2) Cost  longer prompts = higher $ per call. (3) Quality  LLMs lose focus in long contexts ('lost in the middle'). Retrieval solves this: paste only top 2-3 relevant chunks."],
-            ["What are the two phases of RAG?", "INGEST (offline): Load docs í split into chunks í embed í store in vector DB. Done once. QUERY (online): Embed question í search top K chunks í stuff into prompt í generate answer. Done every request."],
+            ["What are the two phases of RAG?", "INGEST (offline): Load docs ‚ùì split into chunks ‚ùì embed ‚ùì store in vector DB. Done once. QUERY (online): Embed question ‚ùì search top K chunks ‚ùì stuff into prompt ‚ùì generate answer. Done every request."],
             ["RAG vs fine-tuning  when to use each?", "Use RAG for KNOWLEDGE (facts, docs, changing data)  it's cheap, fresh, explainable. Use fine-tuning for BEHAVIOR (tone, style, reasoning)  it changes how the model talks, not what it knows. Often you do both: fine-tune tone, RAG for facts."],
-            ["What is an embedding?", "A vector (list of floats, e.g., 1536 numbers) representing text. Similar text í similar vectors. Used for semantic search. Example: 'battery life' and 'flight time' are close in embedding space (high cosine similarity), even if they share no words."],
+            ["What is an embedding?", "A vector (list of floats, e.g., 1536 numbers) representing text. Similar text ‚ùì similar vectors. Used for semantic search. Example: 'battery life' and 'flight time' are close in embedding space (high cosine similarity), even if they share no words."],
             ["What is a chunk?", "A small piece of a document (e.g., 1 paragraph, 500 words). You split docs into chunks before embedding because embeddings work best on focused text (not entire 50-page PDFs). Chunking is an art: too small = loss of context, too large = diluted meaning."],
             ["What is grounding?", "Making the LLM answer from PROVIDED context (retrieved chunks) instead of guessing from training. Grounded answer = based on real docs. Opposite = hallucination. Prompt design is key: 'Answer ONLY from the context below. If not in context, say I don't know.'"],
             ["Does RAG eliminate hallucination?", "No, but it reduces it significantly. RAG grounds answers in real chunks. BUT: if retrieval fails (wrong chunks, bad embeddings, low top-K), the LLM might still hallucinate or say 'not in context.' Good RAG = good retrieval + good prompt engineering."],
@@ -755,21 +755,21 @@ LEARNING GOALS:
       </Section>
 
       {/* 14 */}
-      <Section id="memorize" number="14" title=">‡ Memorize This">
+      <Section id="memorize" number="14" title="üß† Memorize This">
         <MemorizeGrid
           items={[
-            ["RAG definition", "Retrieval-Augmented Generation: retrieve chunks í stuff into prompt í generate grounded answer"],
-            ["Why LLMs hallucinate", "Trained on frozen snapshot, no access to YOUR docs í guess plausible but wrong facts"],
+            ["RAG definition", "Retrieval-Augmented Generation: retrieve chunks ‚ùì stuff into prompt ‚ùì generate grounded answer"],
+            ["Why LLMs hallucinate", "Trained on frozen snapshot, no access to YOUR docs ‚ùì guess plausible but wrong facts"],
             ["Context window", "Input area for LLM (128K tokens for gpt-4o-mini)  only sees what you paste, nothing else"],
-            ["Naive fix problem", "Paste all docs í hits context limit, high cost, slow, 'lost in the middle' quality issue"],
-            ["RAG phases", "INGEST (loadísplitíembedístore, once) + QUERY (embed Qísearchístuffígenerate, every request)"],
-            ["Embedding", "Vector (1536 floats) representing text  similar text í similar vectors (semantic search)"],
+            ["Naive fix problem", "Paste all docs ‚ùì hits context limit, high cost, slow, 'lost in the middle' quality issue"],
+            ["RAG phases", "INGEST (load‚ùìsplit‚ùìembed‚ùìstore, once) + QUERY (embed Q‚ùìsearch‚ùìstuff‚ùìgenerate, every request)"],
+            ["Embedding", "Vector (1536 floats) representing text  similar text ‚ùì similar vectors (semantic search)"],
             ["Chunk", "Small doc piece (1 paragraph, ~500 words)  embed chunks, not whole docs (focus matters)"],
-            ["Grounding", "LLM answers from PROVIDED context (retrieved chunks), not training data í prevents hallucination"],
+            ["Grounding", "LLM answers from PROVIDED context (retrieved chunks), not training data ‚ùì prevents hallucination"],
             ["Top-K retrieval", "Fetch K most similar chunks (e.g., K=3)  trade-off: recall vs cost/noise"],
             ["RAG vs fine-tune", "RAG for knowledge (facts, docs, fresh data), fine-tuning for behavior (tone, style)"],
             ["Toy RAG limit", "Keyword overlap fails on paraphrases  embeddings needed for semantic search"],
-            ["Canonical test Q", "How long does the X1 battery last? í Correct answer: 28 minutes (NimbusBot spec)"],
+            ["Canonical test Q", "How long does the X1 battery last? ‚ùì Correct answer: 28 minutes (NimbusBot spec)"],
           ]}
         />
       </Section>
