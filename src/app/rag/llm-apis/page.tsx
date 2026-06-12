@@ -27,41 +27,41 @@ const DIAGRAM = {
   flows: [
     {
       id: "happy",
-      name: " Single API call",
+      name: "✅ Single API call",
       command: "client.chat.completions.create(...)",
       steps: [
         { node: "messages", paths: ["msg-api"], text: "You build a messages list: [{'role': 'system', 'content': 'You are NimbusBot.'}, {'role': 'user', 'content': 'Say hello!'}]. This is the prompt you send to the API." },
         { node: "api", paths: ["api-model"], text: "The OpenAI API receives your POST request with messages, model='gpt-4o-mini', and optional params (temperature, max_tokens). It forwards the prompt to the model." },
-        { node: "model", paths: ["model-response"], text: "gpt-4o-mini reads the messages and predicts tokens: 'Hello' ❓ '!' ❓ ' Welcome' ❓ ... ❓ stop. It generates a completion: 'Hello! Welcome to Nimbus Gear support.'" },
+        { node: "model", paths: ["model-response"], text: "gpt-4o-mini reads the messages and predicts tokens: 'Hello' → '!' → ' Welcome' → ... → stop. It generates a completion: 'Hello! Welcome to Nimbus Gear support.'" },
         { node: "response", paths: ["response-usage", "response-client"], text: "The API returns a response object: {choices: [{message: {content: '...'}}], usage: {prompt_tokens: 18, completion_tokens: 9}}. You get the answer + metadata." },
         { node: "usage", paths: [], text: "Usage data shows 18 input tokens + 9 output tokens. At $0.15/1M input, $0.60/1M output: cost = $0.0000027 + $0.0000054 = $0.0000081 (~1 cent per 1000 calls)." },
-        { node: "client", paths: [], text: "Your code reads resp.choices[0].message.content ❓ 'Hello! Welcome to Nimbus Gear support.' Prints it. Single-turn call complete. " },
+        { node: "client", paths: [], text: "Your code reads resp.choices[0].message.content → 'Hello! Welcome to Nimbus Gear support.' Prints it. Single-turn call complete. ✅" },
       ],
     },
     {
       id: "fail",
-      name: "L Stateless trap: no memory",
+      name: "❌ Stateless trap: no memory",
       command: "Ask follow-up without history",
       steps: [
         { node: "messages", paths: ["msg-api"], text: "First call: messages = [{'role': 'user', 'content': 'My name is Alice.'}]. You send it, the model replies 'Nice to meet you, Alice!'" },
-        { node: "api", paths: ["api-model"], text: "Second call (NEW request): messages = [{'role': 'user', 'content': 'What is my name?'}]. NO history  you didn't include the first turn!" },
-        { node: "model", paths: ["model-response"], text: "The model sees ONLY 'What is my name?'  it has NO memory of 'Alice' (that was a different request). It says 'I don't know your name.' L" },
+        { node: "api", paths: ["api-model"], text: "Second call (NEW request): messages = [{'role': 'user', 'content': 'What is my name?'}]. NO history — you didn't include the first turn!" },
+        { node: "model", paths: ["model-response"], text: "The model sees ONLY 'What is my name?' — it has NO memory of 'Alice' (that was a different request). It says 'I don't know your name.' L" },
         { node: "response", paths: ["response-client"], text: "You get: 'I don't know your name.' This is the STATELESS trap. The API remembers NOTHING between calls. You must manually resend history." },
         { node: "client", paths: [], text: "User sees wrong answer. The fix: append the assistant's reply to messages, then send the FULL history on the next call. RAG pipelines must manage this carefully." },
       ],
     },
     {
       id: "power",
-      name: "❓ Multi-turn with history",
+      name: "⚡ Multi-turn with history",
       command: "Manual memory: resend full conversation",
       steps: [
         { node: "messages", paths: ["msg-api"], text: "Turn 1: messages = [{'role': 'system', 'content': '...'}, {'role': 'user', 'content': 'My name is Alice.'}]. Send, get 'Nice to meet you, Alice!'" },
         { node: "history", paths: ["history-messages"], text: "You append the assistant reply: messages.append({'role': 'assistant', 'content': 'Nice to meet you, Alice!'}). Now messages has 3 items (system, user, assistant)." },
         { node: "messages", paths: ["msg-api"], text: "Turn 2: Append new user message: messages.append({'role': 'user', 'content': 'What is my name?'}). Now messages has 4 items. Send the FULL list." },
         { node: "api", paths: ["api-model"], text: "The API receives all 4 messages. The model sees the ENTIRE conversation: system prompt, 'My name is Alice', assistant reply, new question." },
-        { node: "model", paths: ["model-response"], text: "The model reads 'My name is Alice' in the history and answers 'Your name is Alice.' CORRECT! It 'remembered' because you resent the history. ❓" },
+        { node: "model", paths: ["model-response"], text: "The model reads 'My name is Alice' in the history and answers 'Your name is Alice.' CORRECT! It 'remembered' because you resent the history. →" },
         { node: "response", paths: ["response-history", "response-client"], text: "You get the correct answer. Append it to history again for turn 3. This is manual multi-turn: you manage the messages list, the API stays stateless." },
-        { node: "client", paths: [], text: "User sees 'Your name is Alice.' Success! This is how chatbots work: loop = get user input ❓ append to messages ❓ call API ❓ append assistant reply ❓ repeat." },
+        { node: "client", paths: [], text: "User sees 'Your name is Alice.' Success! This is how chatbots work: loop = get user input → append to messages → call API → append assistant reply → repeat." },
       ],
     },
   ],
@@ -91,10 +91,10 @@ export default function RagLlmApisPage() {
       icon="🤖"
       title="Calling LLMs from Python"
       gradientWord="LLMs"
-      subtitle="You'll call gpt-4o-mini programmatically: send messages, get completions, understand roles (system/user/assistant), handle statelessness, stream responses, calculate costs, and preview grounding (pasting context into the prompt). This is the foundation for RAG  you MUST master LLM APIs before building retrieval systems."
+      subtitle="You'll call gpt-4o-mini programmatically: send messages, get completions, understand roles (system/user/assistant), handle statelessness, stream responses, calculate costs, and preview grounding (pasting context into the prompt). This is the foundation for RAG — you MUST master LLM APIs before building retrieval systems."
       nav={NAV}
       badges={["🤖 OpenAI API", "🔍 Pure Python", "💰 Cost breakdown", "🎤 Interview-ready"]}
-      next={{ icon: "🧲", label: "Embeddings  Meaning as Numbers", href: "/rag/embeddings" }}
+      next={{ icon: "🧲", label: "Embeddings — Meaning as Numbers", href: "/rag/embeddings" }}
       backHref="/rag"
       backLabel="🦜 RAG & LangChain"
     >
@@ -108,7 +108,7 @@ export default function RagLlmApisPage() {
         <CodeBlock
           title="mental_model.txt"
           runnable={false}
-          code={`YOU ❓ send a LIST of messages ❓ API ❓ LLM ❓ send back ONE message
+          code={`YOU → send a LIST of messages → API → LLM → send back ONE message
 
 INPUT:
   [
@@ -122,7 +122,7 @@ OUTPUT:
     "usage": {"prompt_tokens": 20, "completion_tokens": 4}
   }
 
-                                                                
+────────────────────────────────────────────────────────────────
 KEY CONCEPTS:
 
 1. It's just HTTPS (like the Python API track taught).
@@ -140,7 +140,7 @@ KEY CONCEPTS:
 4. You get back ONE message (the assistant reply).
    To continue the conversation, append it to messages and call again.
 
-                                                                
+────────────────────────────────────────────────────────────────
 COMPARISON TO THE FASTAPI TRACK:
 
 FastAPI (server):         OpenAI API (client):
@@ -149,7 +149,7 @@ FastAPI (server):         OpenAI API (client):
   Return JSON.              Receive JSON.
   uvicorn runs your code.   OpenAI's servers run the model.
 
-Same protocol (HTTP + JSON), different sides. `}
+Same protocol (HTTP + JSON), different sides. ✅`}
         />
         <Callout type="analogy">
           🄍 <strong>Restaurant analogy</strong>: Calling the OpenAI API = calling a restaurant. You send your order (messages list: &quot;I want a latte&quot;). The restaurant (API server) processes it (runs the LLM), and sends back the result (&quot;One latte, ready!&quot;). You don&apos;t see the kitchen (model), you just consume the output.
@@ -163,7 +163,7 @@ Same protocol (HTTP + JSON), different sides. `}
           code={`pip install openai`}
         />
         <P>
-          You need an <IC>OPENAI_API_KEY</IC>. Get it from <strong>platform.openai.com</strong> (sign up, create a new API key). NEVER hardcode keys in code  use environment variables:
+          You need an <IC>OPENAI_API_KEY</IC>. Get it from <strong>platform.openai.com</strong> (sign up, create a new API key). NEVER hardcode keys in code — use environment variables:
         </P>
         <CodeBlock
           title="terminal (set env var)"
@@ -178,12 +178,12 @@ from openai import OpenAI
 client = OpenAI()
 
 print("API key loaded:", os.environ.get("OPENAI_API_KEY")[:10] + "...")
-print("Client ready! ")`}
+print("Client ready! ✅")`}
           output={`API key loaded: sk-proj-Ab...
-Client ready! `}
+Client ready! ✅`}
         />
         <Callout type="mistake">
-          ❓ <strong>NEVER hardcode keys</strong>: <IC>client = OpenAI(api_key=&quot;sk-proj-...&quot;)</IC> = BAD. If you push this to GitHub, your key leaks and attackers drain your account. Use <IC>export OPENAI_API_KEY=...</IC> or a <IC>.env</IC> file (with <IC>python-dotenv</IC>).
+          ⚠️ <strong>NEVER hardcode keys</strong>: <IC>client = OpenAI(api_key=&quot;sk-proj-...&quot;)</IC> = BAD. If you push this to GitHub, your key leaks and attackers drain your account. Use <IC>export OPENAI_API_KEY=...</IC> or a <IC>.env</IC> file (with <IC>python-dotenv</IC>).
         </Callout>
       </Section>
 
@@ -216,14 +216,14 @@ print("Assistant:", response.choices[0].message.content)`}
           runnable={false}
           code={`client.chat.completions.create(
     model="gpt-4o-mini",
-      ❓
+      ↑
     Which model to use. Options:
-      - gpt-4o-mini (cheap, fast, good quality) ❓ use this for RAG
+      - gpt-4o-mini (cheap, fast, good quality) → use this for RAG
       - gpt-4o (expensive, best quality)
       - gpt-3.5-turbo (older, cheaper than mini)
 
     messages=[{"role": "user", "content": "Say hello to Nimbus Gear!"}]
-      ❓
+      ↑
     A list of message dicts. Each dict has:
       - role: "system", "user", or "assistant"
       - content: the text (string)
@@ -231,7 +231,7 @@ print("Assistant:", response.choices[0].message.content)`}
     The model reads ALL messages in order, then generates a reply.
 )
 
-                                                                
+────────────────────────────────────────────────────────────────
 RESPONSE OBJECT:
 
 response = {
@@ -251,19 +251,19 @@ response = {
 }
 
 Access the text:
-  response.choices[0].message.content  ❓ "Hello, Nimbus Gear! ..."
+  response.choices[0].message.content  → "Hello, Nimbus Gear! ..."
 
 Access token counts:
-  response.usage.prompt_tokens      ❓ 7 (your input)
-  response.usage.completion_tokens  ❓ 11 (model's output)
+  response.usage.prompt_tokens      → 7 (your input)
+  response.usage.completion_tokens  → 11 (model's output)
 
-                                                                
+────────────────────────────────────────────────────────────────
 WHY choices[0]?
 
 The API can return multiple completions (if you set n=3, you get 3 different
 answers). By default n=1, so choices has 1 item. We access choices[0].
 
-                                                                
+────────────────────────────────────────────────────────────────
 THIS IS THE FOUNDATION OF RAG.
 
 Later we'll:
@@ -298,7 +298,7 @@ For now, master the API call. 🎯`}
 
 client = OpenAI()
 
-#    Call 1: no system prompt (default polite assistant)   
+# ── Call 1: no system prompt (default polite assistant) ──
 response1 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
@@ -310,7 +310,7 @@ print(response1.choices[0].message.content)
 
 print("\\n" + "="*60 + "\\n")
 
-#    Call 2: with system prompt (NimbusBot persona)   
+# ── Call 2: with system prompt (NimbusBot persona) ──
 response2 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
@@ -347,7 +347,7 @@ The Nimbus X1 is a portable drone with 28 min battery life, 5 km range, and 4K c
 
 client = OpenAI()
 
-#    Turn 1: User says their name   
+# ── Turn 1: User says their name ──
 response1 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
@@ -357,7 +357,7 @@ response1 = client.chat.completions.create(
 print("Turn 1:")
 print(response1.choices[0].message.content)
 
-#    Turn 2: Ask "What is my name?" (NO HISTORY)   
+# ── Turn 2: Ask "What is my name?" (NO HISTORY) ──
 response2 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
@@ -384,7 +384,7 @@ client = OpenAI()
 # Build the conversation history as a list
 messages = []
 
-#    Turn 1   
+# ── Turn 1 ──
 messages.append({"role": "user", "content": "My name is Alice."})
 
 response1 = client.chat.completions.create(
@@ -398,12 +398,12 @@ print("Turn 1:", assistant_reply)
 # Append the assistant's reply to history
 messages.append({"role": "assistant", "content": assistant_reply})
 
-#    Turn 2   
+# ── Turn 2 ──
 messages.append({"role": "user", "content": "What is my name?"})
 
 response2 = client.chat.completions.create(
     model="gpt-4o-mini",
-    messages=messages  #  FULL HISTORY (3 messages)
+    messages=messages  # ✅ FULL HISTORY (3 messages)
 )
 
 print("Turn 2:", response2.choices[0].message.content)
@@ -420,10 +420,10 @@ Final messages list:
   user: What is my name?...`}
         />
         <P>
-          <strong>Success!</strong> The model &quot;remembered&quot; because we sent the full history (user, assistant, user). This is <strong>manual memory management</strong>  you maintain the messages list.
+          <strong>Success!</strong> The model &quot;remembered&quot; because we sent the full history (user, assistant, user). This is <strong>manual memory management</strong> — you maintain the messages list.
         </P>
         <Callout type="behind">
-          ❓ <strong>Behind the scenes</strong>: The model STILL has zero memory. On turn 2, it received 3 messages and processed them like a NEW request. It saw &quot;My name is Alice&quot; in the input and answered accordingly. The API is stateless; YOU are the state keeper.
+          ⚠️ <strong>Behind the scenes</strong>: The model STILL has zero memory. On turn 2, it received 3 messages and processed them like a NEW request. It saw &quot;My name is Alice&quot; in the input and answered accordingly. The API is stateless; YOU are the state keeper.
         </Callout>
         <P>
           <strong>Implication for RAG</strong>: If your chatbot has a 10-turn conversation, you must send all 20 messages (10 user + 10 assistant) on turn 11. Longer history = more tokens = higher cost. Advanced RAG systems truncate old turns or summarize them.
@@ -450,7 +450,7 @@ client = OpenAI()
 
 prompt = "Complete this: The Nimbus X1 is a"
 
-#    temperature=0 (deterministic)   
+# ── temperature=0 (deterministic) ──
 resp1 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": prompt}],
@@ -467,7 +467,7 @@ print("temp=0 (run 2):", resp2.choices[0].message.content)
 
 print("\\n" + "="*60 + "\\n")
 
-#    temperature=1.2 (creative)   
+# ── temperature=1.2 (creative) ──
 resp3 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": prompt}],
@@ -498,7 +498,7 @@ temp=1.2 (run 2): The Nimbus X1 is a sleek, high-performance drone perfect for a
 
 client = OpenAI()
 
-#    No max_tokens (model decides when to stop)   
+# ── No max_tokens (model decides when to stop) ──
 resp1 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": "Explain the Nimbus X1."}]
@@ -508,7 +508,7 @@ print(resp1.choices[0].message.content)
 
 print("\\n" + "="*60 + "\\n")
 
-#    max_tokens=20 (force short answer)   
+# ── max_tokens=20 (force short answer) ──
 resp2 = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[{"role": "user", "content": "Explain the Nimbus X1."}],
@@ -545,7 +545,7 @@ stream = client.chat.completions.create(
     messages=[
         {"role": "user", "content": "Explain the Nimbus X1 battery in one sentence."}
     ],
-    stream=True  # ❓ Enable streaming
+    stream=True  # → Enable streaming
 )
 
 print("Streaming output:", end=" ")
@@ -661,7 +661,7 @@ response = client.chat.completions.create(
             "content": "Give me the Nimbus X1 specs: battery (minutes), range (km), weight (grams)."
         }
     ],
-    response_format={"type": "json_object"}  # ❓ Force JSON output
+    response_format={"type": "json_object"}  # → Force JSON output
 )
 
 answer_text = response.choices[0].message.content
@@ -836,25 +836,25 @@ Answer: I don't know.`}
       {/* 12 */}
       <Section id="debugging" number="12" title="Debugging & Common Errors">
         <Callout type="mistake">
-          ❓ <strong>Error 1: AuthenticationError: 401 Incorrect API key</strong>
+          ⚠️ <strong>Error 1: AuthenticationError: 401 Incorrect API key</strong>
         </Callout>
         <P>
           <strong>Fix</strong>: Check <IC>echo $OPENAI_API_KEY</IC>. If empty, run <IC>export OPENAI_API_KEY=&quot;sk-proj-...&quot;</IC>. If the key is wrong, get a new one from platform.openai.com.
         </P>
         <Callout type="mistake">
-          ❓ <strong>Error 2: RateLimitError: 429 You exceeded your current quota</strong>
+          ⚠️ <strong>Error 2: RateLimitError: 429 You exceeded your current quota</strong>
         </Callout>
         <P>
           <strong>Fix</strong>: You hit your account&apos;s free tier limit or monthly budget. Add payment method at platform.openai.com/account/billing, or wait for quota reset.
         </P>
         <Callout type="mistake">
-          ❓ <strong>Error 3: Model not found (e.g., <IC>model=&quot;gpt-5&quot;</IC>)</strong>
+          ⚠️ <strong>Error 3: Model not found (e.g., <IC>model=&quot;gpt-5&quot;</IC>)</strong>
         </Callout>
         <P>
           <strong>Fix</strong>: Use valid model names: <IC>gpt-4o-mini</IC>, <IC>gpt-4o</IC>, <IC>gpt-3.5-turbo</IC>. Check platform.openai.com/docs/models.
         </P>
         <Callout type="mistake">
-          ❓ <strong>Error 4: Response is cut off mid-sentence</strong>
+          ⚠️ <strong>Error 4: Response is cut off mid-sentence</strong>
         </Callout>
         <P>
           <strong>Fix</strong>: You hit <IC>max_tokens</IC>. Increase it (e.g., <IC>max_tokens=500</IC>) or remove the param (model decides).
@@ -867,20 +867,20 @@ Answer: I don't know.`}
           runnable={false}
           code={`1. Print the messages list BEFORE calling the API.
      print("Sending messages:", messages)
-   ❓ Verify you're sending what you think you're sending.
+   → Verify you're sending what you think you're sending.
 
 2. Print response.usage to see token counts.
      print(f"Used {response.usage.total_tokens} tokens")
-   ❓ Catch runaway costs early.
+   → Catch runaway costs early.
 
 3. Use temperature=0 for deterministic output (easier to debug).
 
 4. Test with a simple prompt first (e.g., "Say hello") to verify API key works.
 
 5. Check response.choices[0].finish_reason:
-     "stop"       ❓ normal completion
-     "length"     ❓ hit max_tokens (output truncated)
-     "content_filter" ❓ triggered safety filter (rare)
+     "stop"       → normal completion
+     "length"     → hit max_tokens (output truncated)
+     "content_filter" → triggered safety filter (rare)
 
 6. Wrap calls in try/except and log errors.
      except Exception as e:
@@ -896,7 +896,7 @@ Answer: I don't know.`}
           title="lab_tasks.txt"
           runnable={false}
           code={`LAB: Build a terminal chatbot with history
-                                                                
+────────────────────────────────────────────────────────────────
 
 TASK 1: Setup
   1. Set OPENAI_API_KEY env var.
@@ -940,7 +940,7 @@ TASK 4: Test multi-turn
     You: How long does the battery last?
     Bot: The X1 battery lasts about 28 minutes.
     You: What did I say my drone was?
-    Bot: You said your drone is the X1.  ❓  MEMORY WORKS
+    Bot: You said your drone is the X1.  → ✅ MEMORY WORKS
 
   The bot remembers because you resent the full history.
 
@@ -952,10 +952,10 @@ TASK 5: Add token usage logging
 
 TASK 6: Add grounding (bonus)
   Paste manual excerpt into system prompt (like grounding_demo.py).
-  Ask "How long does the battery last?" ❓ should say 28 min (from context).
-  Ask "What's the camera resolution?" (not in context) ❓ "I don't know."
+  Ask "How long does the battery last?" → should say 28 min (from context).
+  Ask "What's the camera resolution?" (not in context) → "I don't know."
 
-                                                                
+────────────────────────────────────────────────────────────────
 LEARNING GOALS:
 
 - Build a stateful chatbot (manual history management).
@@ -971,16 +971,16 @@ LEARNING GOALS:
           head={["Question", "Strong answer"]}
           rows={[
             ["How do you call an LLM from Python?", "Use the OpenAI library: client = OpenAI(), then client.chat.completions.create(model='gpt-4o-mini', messages=[...]). The messages list is your prompt (role + content). The API returns a response with choices[0].message.content (the answer) and usage (token counts)."],
-            ["What are the three message roles?", "system (instructions/persona set by you), user (end user's input), assistant (model's replies  you also use this to show the model its own past replies for multi-turn chat). Example: [{role: 'system', ...}, {role: 'user', ...}, {role: 'assistant', ...}]."],
+            ["What are the three message roles?", "system (instructions/persona set by you), user (end user's input), assistant (model's replies — you also use this to show the model its own past replies for multi-turn chat). Example: [{role: 'system', ...}, {role: 'user', ...}, {role: 'assistant', ...}]."],
             ["Why is the API stateless?", "The API remembers NOTHING between requests. Every call is independent. To 'remember' past conversation, YOU must resend the full history (all previous user + assistant messages) on each new call. This is manual memory management."],
             ["How do you handle multi-turn chat?", "Maintain a messages list. After each call: (1) append the user's message, (2) call the API with the full messages list, (3) append the assistant's reply to messages. Repeat. The list grows: [system, user1, asst1, user2, asst2, ...]. The model 'remembers' by reading history."],
-            ["What is temperature?", "Controls randomness. 0.0 = deterministic (same input ❓ same output), 1.0 = default, 2.0 = very creative. For RAG, use temperature=0 to get consistent, factual answers. For creative writing, use 1.0-1.5."],
+            ["What is temperature?", "Controls randomness. 0.0 = deterministic (same input → same output), 1.0 = default, 2.0 = very creative. For RAG, use temperature=0 to get consistent, factual answers. For creative writing, use 1.0-1.5."],
             ["What is max_tokens?", "The maximum number of OUTPUT tokens the model can generate. It does NOT limit input tokens. Use it to cap costs (e.g., max_tokens=100 = ~75 words max). If the model hits this limit, it stops mid-sentence (finish_reason='length')."],
-            ["How do you calculate cost?", "Cost = (input_tokens / 1M) ❓ input_price + (output_tokens / 1M) ❓ output_price. Example (gpt-4o-mini): 1000 input tokens + 500 output tokens = (1000/1M)❓$0.15 + (500/1M)❓$0.60 = $0.00015 + $0.0003 = $0.00045. Check response.usage for token counts."],
-            ["Why use gpt-4o-mini for RAG?", "It's cheap ($0.15/1M input, $0.60/1M output  10x cheaper than gpt-4o), fast (~1 sec latency), and good quality for factual Q&A. RAG adds retrieval context (2K tokens), so input cost is still low. Mini is the best value for most RAG use cases."],
+            ["How do you calculate cost?", "Cost = (input_tokens / 1M) → input_price + (output_tokens / 1M) → output_price. Example (gpt-4o-mini): 1000 input tokens + 500 output tokens = (1000/1M)→$0.15 + (500/1M)→$0.60 = $0.00015 + $0.0003 = $0.00045. Check response.usage for token counts."],
+            ["Why use gpt-4o-mini for RAG?", "It's cheap ($0.15/1M input, $0.60/1M output — 10x cheaper than gpt-4o), fast (~1 sec latency), and good quality for factual Q&A. RAG adds retrieval context (2K tokens), so input cost is still low. Mini is the best value for most RAG use cases."],
             ["What is streaming?", "stream=True makes the API return tokens as they're generated (typewriter effect). You iterate over chunks and print delta.content in real-time. Better UX (users see progress), lower latency to first token. Trade-off: you can't access response.usage until the stream ends."],
             ["How do you ground an LLM answer?", "Paste context into the prompt (usually system message): 'Answer ONLY from the context below: [paste chunks]. If not in context, say I don't know.' Set temperature=0. The model reads the context and generates a grounded answer. This is RAG generation (retrieval comes next)."],
-            ["Common errors and fixes?", "401 AuthenticationError ❓ bad API key (check OPENAI_API_KEY env). 429 RateLimitError ❓ quota exceeded (add payment or wait). Model not found ❓ use valid names (gpt-4o-mini, gpt-4o). Truncated output ❓ increase max_tokens. Always wrap calls in try/except and retry with backoff."],
+            ["Common errors and fixes?", "401 AuthenticationError → bad API key (check OPENAI_API_KEY env). 429 RateLimitError → quota exceeded (add payment or wait). Model not found → use valid names (gpt-4o-mini, gpt-4o). Truncated output → increase max_tokens. Always wrap calls in try/except and retry with backoff."],
             ["What's the difference between input and output cost?", "Output tokens are MORE expensive (e.g., gpt-4o-mini: $0.60/1M output vs $0.15/1M input = 4x). Minimize output (use max_tokens, concise prompts). RAG adds context to INPUT (cheap). Optimize by retrieving only top 2-3 chunks, not 10."],
           ]}
         />
@@ -992,14 +992,14 @@ LEARNING GOALS:
           items={[
             ["Install", "pip install openai; export OPENAI_API_KEY=sk-proj-..."],
             ["First call", "from openai import OpenAI; client = OpenAI(); client.chat.completions.create(model='gpt-4o-mini', messages=[...])"],
-            ["Three roles", "system (instructions), user (input), assistant (model reply  also for history)"],
-            ["Stateless API", "API remembers NOTHING  YOU resend full messages list every call (manual history)"],
-            ["Get answer", "response.choices[0].message.content ❓ the text; response.usage ❓ token counts"],
-            ["Multi-turn pattern", "messages.append(user_msg) ❓ call API ❓ messages.append(assistant_reply) ❓ repeat"],
+            ["Three roles", "system (instructions), user (input), assistant (model reply — also for history)"],
+            ["Stateless API", "API remembers NOTHING — YOU resend full messages list every call (manual history)"],
+            ["Get answer", "response.choices[0].message.content → the text; response.usage → token counts"],
+            ["Multi-turn pattern", "messages.append(user_msg) → call API → messages.append(assistant_reply) → repeat"],
             ["Temperature", "0 = deterministic (RAG), 1 = default, 1.5 = creative (use 0 for factual answers)"],
-            ["Max tokens", "max_tokens=100 ❓ max ~75 words output (caps cost, may truncate mid-sentence)"],
-            ["Cost formula", "(input_tokens/1M)❓$0.15 + (output_tokens/1M)❓$0.60 (gpt-4o-mini)"],
-            ["Streaming", "stream=True ❓ iterate chunks, print delta.content (typewriter effect, better UX)"],
+            ["Max tokens", "max_tokens=100 → max ~75 words output (caps cost, may truncate mid-sentence)"],
+            ["Cost formula", "(input_tokens/1M)→$0.15 + (output_tokens/1M)→$0.60 (gpt-4o-mini)"],
+            ["Streaming", "stream=True → iterate chunks, print delta.content (typewriter effect, better UX)"],
             ["Grounding", "Paste context in system prompt: 'Answer from context: [chunks]. If not in context, say I don't know.'"],
             ["Error handling", "try/except: AuthenticationError (bad key), RateLimitError (quota), APIError (retry with backoff)"],
           ]}

@@ -30,7 +30,7 @@ const DIAGRAM = {
   flows: [
     {
       id: "happy",
-      name: " Paraphrase ❓ correct chunk",
+      name: "✅ Paraphrase → correct chunk",
       command: "How long can it fly?",
       steps: [
         { node: "question", paths: ["q-embed"], text: "User asks: 'How long can it fly?' This is a PARAPHRASE of 'battery flight time.' Zero keyword overlap with the manual chunk ('battery provides 28 minutes'), but same MEANING." },
@@ -40,12 +40,12 @@ const DIAGRAM = {
         { node: "chunk2", paths: ["chunk2-cos"], text: "Chunk 2 (wind): 'Max wind resistance 38 km/h.' Pre-embedded vector: [-0.045, 0.062, ...]. NOT similar to question vector (different topic)." },
         { node: "chunk3", paths: ["chunk3-cos"], text: "Chunk 3 (returns): '30-day returns if unused.' Pre-embedded vector: [0.003, -0.110, ...]. Also not similar (unrelated topic)." },
         { node: "cosine", paths: ["cos-top"], text: "Compute cosine similarity for each: Q vs Chunk1 = 0.87 (high!), Q vs Chunk2 = 0.34 (low), Q vs Chunk3 = 0.19 (very low). Rank by score. Chunk 1 wins." },
-        { node: "top", paths: [], text: "Top match: battery chunk (score 0.87). Retrieved! The paraphrase 'How long can it fly?' successfully matched 'battery flight time 28 minutes' via semantic similarity.  Keyword search would've FAILED." },
+        { node: "top", paths: [], text: "Top match: battery chunk (score 0.87). Retrieved! The paraphrase 'How long can it fly?' successfully matched 'battery flight time 28 minutes' via semantic similarity. ✅ Keyword search would've FAILED." },
       ],
     },
     {
       id: "fail",
-      name: "L Different model ❓ garbage scores",
+      name: "❌ Different model → garbage scores",
       command: "Mixing text-embedding-3-small and text-embedding-ada-002",
       steps: [
         { node: "question", paths: ["q-embed"], text: "User asks a question. We embed it using text-embedding-3-small (1536 dimensions). This is our query vector." },
@@ -58,16 +58,16 @@ const DIAGRAM = {
     },
     {
       id: "power",
-      name: "❓ Batch-embed all chunks (ingest once)",
+      name: "⚡ Batch-embed all chunks (ingest once)",
       command: "Embed 10 chunks in one API call",
       steps: [
         { node: "question", paths: [], text: "During INGEST (offline, one-time), you have 10 doc chunks to embed. You could call the API 10 times (slow), or batch them into 1 call (fast)." },
         { node: "embed-q", paths: ["embed-vec"], text: "Call embeddings API with input=[chunk1, chunk2, ..., chunk10] (list of strings). The API embeds all 10 in parallel and returns 10 vectors. 10x faster than 10 sequential calls." },
         { node: "q-vector", paths: ["vec-chunk1", "vec-chunk2", "vec-chunk3"], text: "You get back: [{embedding: [...]}, {embedding: [...]}, ...]. Extract the 10 vectors and store them (FAISS, Chroma, or even a dict)." },
         { node: "chunk1", paths: [], text: "Chunk 1 vector stored. Chunk 2 vector stored. ... Chunk 10 vector stored. Ingest complete. This happens ONCE (or when docs update)." },
-        { node: "chunk2", paths: [], text: "At QUERY time (user asks a question), you embed ONLY the question (1 API call). Then you compare the question vector vs all 10 stored vectors (fast, local cosine similarity  no API calls)." },
+        { node: "chunk2", paths: [], text: "At QUERY time (user asks a question), you embed ONLY the question (1 API call). Then you compare the question vector vs all 10 stored vectors (fast, local cosine similarity — no API calls)." },
         { node: "cosine", paths: ["cos-top"], text: "Cosine similarity is cheap (dot product + norms). You compare the question vector to 10, 100, or 10,000 stored vectors in milliseconds (pure numpy/Python)." },
-        { node: "top", paths: [], text: "Top-K retrieval: sort by score, take top 3. Total API calls per query: 1 (embed question). Batch embedding at ingest time = huge speedup. ❓" },
+        { node: "top", paths: [], text: "Top-K retrieval: sort by score, take top 3. Total API calls per query: 1 (embed question). Batch embedding at ingest time = huge speedup. →" },
       ],
     },
   ],
@@ -94,12 +94,12 @@ export default function RagEmbeddingsPage() {
   return (
     <TopicShell
       icon="🧲"
-      title="Embeddings  Meaning as Numbers"
+      title="Embeddings — Meaning as Numbers"
       gradientWord="Embeddings"
-      subtitle="Keyword search fails on paraphrases. Embeddings fix this: convert text to vectors (lists of floats) that capture MEANING. Similar text ❓ similar vectors. You'll learn cosine similarity from scratch, embed real sentences, build a semantic search engine in pure Python, and understand why RAG uses embeddings for retrieval."
+      subtitle="Keyword search fails on paraphrases. Embeddings fix this: convert text to vectors (lists of floats) that capture MEANING. Similar text → similar vectors. You'll learn cosine similarity from scratch, embed real sentences, build a semantic search engine in pure Python, and understand why RAG uses embeddings for retrieval."
       nav={NAV}
       badges={["🧲 Semantic search", "🔍 Pure Python + numpy", "💰 Cost breakdown", "🎤 Interview-ready"]}
-      next={{ icon: "🗂", label: "Vector Stores  FAISS & Chroma", href: "/rag/vector-stores" }}
+      next={{ icon: "🗂️", label: "Vector Stores — FAISS & Chroma", href: "/rag/vector-stores" }}
       backHref="/rag"
       backLabel="🦜 RAG & LangChain"
     >
@@ -129,13 +129,13 @@ def retrieve_keyword(question, docs):
     ranked = sorted(zip(scores, docs), reverse=True)
     return ranked[0][1]  # top chunk
 
-#    Test 1: Original question (works)   
+# ── Test 1: Original question (works) ──
 q1 = "How long does the X1 battery last?"
 print("Q1:", q1)
 print("Retrieved:", retrieve_keyword(q1, DOCS))
 print()
 
-#    Test 2: Paraphrase (FAILS)   
+# ── Test 2: Paraphrase (FAILS) ──
 q2 = "How long can it fly?"
 print("Q2:", q2)
 print("Retrieved:", retrieve_keyword(q2, DOCS))
@@ -159,7 +159,7 @@ Overlap between Q2 and battery chunk: 0 words (none shared!)`}
           <strong>FAIL!</strong> The paraphrase &quot;How long can it fly?&quot; shares ZERO words with the battery chunk (&quot;battery provides 28 minutes of flight time&quot;). The keyword retriever retrieves the WRONG chunk (range/wind). But a human knows &quot;how long can it fly&quot; = &quot;battery flight time.&quot; <strong>Same meaning, different words.</strong>
         </P>
         <Callout type="mistake">
-          ❓ <strong>Keyword search is BLIND to meaning</strong>. It counts word overlap. Synonyms, paraphrases, and semantic similarity are invisible to it. This is why RAG uses <strong>embeddings</strong>  they capture meaning, not just keywords.
+          ⚠️ <strong>Keyword search is BLIND to meaning</strong>. It counts word overlap. Synonyms, paraphrases, and semantic similarity are invisible to it. This is why RAG uses <strong>embeddings</strong> — they capture meaning, not just keywords.
         </Callout>
       </Section>
 
@@ -201,9 +201,9 @@ Type: <class 'list'> (list of floats)`}
           runnable={false}
           code={`INPUT:  "How long does the X1 battery last?"
 MODEL:  text-embedding-3-small (OpenAI's embedding model)
-OUTPUT: [0.018, -0.034, 0.121, ..., 0.099]  ❓ 1536 floats
+OUTPUT: [0.018, -0.034, 0.121, ..., 0.099]  → 1536 floats
 
-                                                                
+────────────────────────────────────────────────────────────────
 EACH NUMBER = A "FEATURE" OF THE TEXT
 
 The 1536 numbers encode:
@@ -214,30 +214,30 @@ The 1536 numbers encode:
 
 The model learned these patterns from BILLIONS of texts during training.
 
-                                                                
-KEY PROPERTY: SIMILAR TEXT ❓ SIMILAR VECTORS
+────────────────────────────────────────────────────────────────
+KEY PROPERTY: SIMILAR TEXT → SIMILAR VECTORS
 
 Embed: "How long does the battery last?"
-  ❓ [0.018, -0.034, 0.121, ...]
+  → [0.018, -0.034, 0.121, ...]
 
 Embed: "What is the battery life?"
-  ❓ [0.019, -0.033, 0.119, ...]  ❓ ALMOST THE SAME
+  → [0.019, -0.033, 0.119, ...]  → ALMOST THE SAME
 
 Embed: "Can I return the X1?"
-  ❓ [-0.023, 0.067, -0.045, ...]  ❓ VERY DIFFERENT
+  → [-0.023, 0.067, -0.045, ...]  → VERY DIFFERENT
 
-Measure "distance" between vectors ❓ semantic similarity.
+Measure "distance" between vectors → semantic similarity.
   Close vectors = similar meaning.
   Far vectors = different meaning.
 
-                                                                
+────────────────────────────────────────────────────────────────
 THIS IS WHY EMBEDDINGS SOLVE THE PARAPHRASE PROBLEM.
 
 "How long can it fly?" and "battery flight time" share NO keywords,
 but their EMBEDDINGS are close (high cosine similarity).
 
-Keyword search: 0% overlap ❓ retrieval fails.
-Embedding search: 87% similarity ❓ retrieval succeeds. `}
+Keyword search: 0% overlap → retrieval fails.
+Embedding search: 87% similarity → retrieval succeeds. ✅`}
         />
         <Callout type="analogy">
           🄍 <strong>Map analogy</strong>: Think of a 2D map. Cities with similar climates are close (Miami near Havana, both tropical). Cities with different climates are far (Miami far from Oslo). Embeddings are the same, but in 1536 dimensions. &quot;Battery life&quot; and &quot;flight time&quot; are close. &quot;Battery life&quot; and &quot;warranty&quot; are far.
@@ -255,18 +255,18 @@ Embedding search: 87% similarity ❓ retrieval succeeds. `}
           code={`2D embedding space (imaginary, for illustration):
 
       Y (semantic axis 2)
-      ❓
+      ↑
    battery
-      ❓   flight time
-      ❓       ❓
-      ❓
-                              ❓ X (semantic axis 1)
-      ❓
-      ❓
+      →   flight time
+      ↑       ↑
+      ↑
+  ────────────────────────────→ X (semantic axis 1)
+      ↑
+      ↑
     warranty    returns
-      ❓       ❓
+      ↑       ↑
 
-                                                                
+────────────────────────────────────────────────────────────────
 OBSERVATIONS:
 
 1. "battery" and "flight time" are CLOSE (related concepts).
@@ -278,12 +278,12 @@ OBSERVATIONS:
 3. "warranty" and "returns" are CLOSE (both legal terms).
    Distance H 0.3 units.
 
-                                                                
+────────────────────────────────────────────────────────────────
 IN REAL EMBEDDINGS (1536-D):
 
 Each word/sentence is a point in 1536-dimensional space.
-  "How long can it fly?" ❓ [0.018, -0.034, 0.121, ..., 0.099]
-  "battery flight time"  ❓ [0.021, -0.029, 0.118, ..., 0.095]
+  "How long can it fly?" → [0.018, -0.034, 0.121, ..., 0.099]
+  "battery flight time"  → [0.021, -0.029, 0.118, ..., 0.095]
 
 Distance between them = sqrt( sum((a_i - b_i)^2 for all 1536 dimensions) )
 OR: cosine similarity (preferred for text).
@@ -301,7 +301,7 @@ Close distance = high similarity = related meaning. 🎯`}
           title="cosine_from_scratch.py"
           code={`import numpy as np
 
-# Cosine similarity formula: cos(❓) = (A ❓ B) / (||A|| * ||B||)
+# Cosine similarity formula: cos(→) = (A → B) / (||A|| * ||B||)
 def cosine_similarity(a, b):
     # Dot product
     dot_product = np.dot(a, b)
@@ -313,7 +313,7 @@ def cosine_similarity(a, b):
     # Cosine similarity
     return dot_product / (norm_a * norm_b)
 
-#    Test 1: Identical vectors (should be 1.0)   
+# ── Test 1: Identical vectors (should be 1.0) ──
 a = np.array([1, 2, 3])
 b = np.array([1, 2, 3])
 print("Identical vectors:")
@@ -322,16 +322,16 @@ print(f"  b = {b}")
 print(f"  cosine = {cosine_similarity(a, b):.6f}")
 print()
 
-#    Test 2: Orthogonal vectors (should be 0.0)   
+# ── Test 2: Orthogonal vectors (should be 0.0) ──
 a = np.array([1, 0, 0])
 b = np.array([0, 1, 0])
-print("Orthogonal vectors (90❓ angle):")
+print("Orthogonal vectors (90→ angle):")
 print(f"  a = {a}")
 print(f"  b = {b}")
 print(f"  cosine = {cosine_similarity(a, b):.6f}")
 print()
 
-#    Test 3: Similar but not identical   
+# ── Test 3: Similar but not identical ──
 a = np.array([1, 2, 0])
 b = np.array([2, 4, 0])  # same direction, different magnitude
 print("Parallel vectors (same direction):")
@@ -340,25 +340,25 @@ print(f"  b = {b}")
 print(f"  cosine = {cosine_similarity(a, b):.6f}")
 print()
 
-#    Test 4: Realistic example (toy 3D embeddings)   
+# ── Test 4: Realistic example (toy 3D embeddings) ──
 # Imagine:
-#   "battery life" ❓ [1, 2, 0]
-#   "flight time"  ❓ [1.1, 2.2, 0.1] (close in meaning)
-#   "warranty"     ❓ [0, 0, 3] (unrelated)
+#   "battery life" → [1, 2, 0]
+#   "flight time"  → [1.1, 2.2, 0.1] (close in meaning)
+#   "warranty"     → [0, 0, 3] (unrelated)
 
 battery = np.array([1, 2, 0])
 flight  = np.array([1.1, 2.2, 0.1])
 warranty = np.array([0, 0, 3])
 
 print("Realistic semantic similarity:")
-print(f"  battery vs flight:   {cosine_similarity(battery, flight):.6f} (high ❓ related)")
-print(f"  battery vs warranty: {cosine_similarity(battery, warranty):.6f} (low ❓ unrelated)")`}
+print(f"  battery vs flight:   {cosine_similarity(battery, flight):.6f} (high → related)")
+print(f"  battery vs warranty: {cosine_similarity(battery, warranty):.6f} (low → unrelated)")`}
           output={`Identical vectors:
   a = [1 2 3]
   b = [1 2 3]
   cosine = 1.000000
 
-Orthogonal vectors (90❓ angle):
+Orthogonal vectors (90→ angle):
   a = [1 0 0]
   b = [0 1 0]
   cosine = 0.000000
@@ -369,8 +369,8 @@ Parallel vectors (same direction):
   cosine = 1.000000
 
 Realistic semantic similarity:
-  battery vs flight:   0.995037 (high ❓ related)
-  battery vs warranty: 0.000000 (low ❓ unrelated)`}
+  battery vs flight:   0.995037 (high → related)
+  battery vs warranty: 0.000000 (low → unrelated)`}
         />
         <P>
           <strong>Key insights</strong>:
@@ -387,7 +387,7 @@ Realistic semantic similarity:
           ]}
         />
         <Callout type="behind">
-          ❓ <strong>Why cosine, not euclidean distance?</strong> Cosine measures DIRECTION, not magnitude. Two texts can have different lengths (embeddings with different magnitudes) but same meaning (same direction). Cosine normalizes for this. Euclidean distance doesn&apos;t.
+          ⚠️ <strong>Why cosine, not euclidean distance?</strong> Cosine measures DIRECTION, not magnitude. Two texts can have different lengths (embeddings with different magnitudes) but same meaning (same direction). Cosine normalizes for this. Euclidean distance doesn&apos;t.
         </Callout>
       </Section>
 
@@ -468,7 +468,7 @@ from openai import OpenAI
 
 client = OpenAI()
 
-#    INGEST PHASE (one-time)   
+# ── INGEST PHASE (one-time) ──
 
 # Our "database" = 6 Nimbus Gear doc chunks
 DOCS = [
@@ -488,7 +488,7 @@ for doc in DOCS:
 
 print("Ingest complete. Index ready.\\n")
 
-#    QUERY PHASE (every user request)   
+# ── QUERY PHASE (every user request) ──
 
 def search(question, top_k=2):
     print(f"QUERY: {question}")
@@ -514,7 +514,7 @@ def search(question, top_k=2):
 
     return results
 
-#    Test queries   
+# ── Test queries ──
 
 # Query 1: Paraphrase (battery)
 results = search("How long can it fly?", top_k=2)
@@ -553,7 +553,7 @@ QUERY: Is the X1 waterproof?
         <Table
           head={["Query", "Top match", "Why it worked"]}
           rows={[
-            [<>&quot;How long can it fly?&quot;</>, "Battery chunk (28 minutes)", <>Paraphrase of &quot;flight time&quot; ❓ embeddings captured meaning</>],
+            [<>&quot;How long can it fly?&quot;</>, "Battery chunk (28 minutes)", <>Paraphrase of &quot;flight time&quot; → embeddings captured meaning</>],
             [<>&quot;Can I get my money back?&quot;</>, "Returns/warranty chunk", <>&quot;get my money back&quot; = &quot;returns&quot; (synonyms in embedding space)</>],
             [<>&quot;Is the X1 waterproof?&quot;</>, "Rain/waterproof chunk", <>Direct semantic match: &quot;waterproof&quot; appears in chunk, high score</>],
           ]}
@@ -580,7 +580,7 @@ QUERY: Is the X1 waterproof?
           <strong>Recommendation</strong>: Use <IC>text-embedding-3-small</IC> for RAG. It&apos;s cheap, fast, and good quality. The extra dimensions in 3-large (3072 vs 1536) give ~2% better accuracy but cost 6x more. Not worth it for most apps.
         </P>
         <Callout type="mistake">
-          ❓ <strong>NEVER mix models</strong>. If you embed chunks with <IC>text-embedding-3-small</IC> (1536-dim), you MUST embed questions with the SAME model. Mixing models (e.g., 3-small chunks + ada-002 questions) gives garbage similarity scores. The vectors live in different spaces.
+          ⚠️ <strong>NEVER mix models</strong>. If you embed chunks with <IC>text-embedding-3-small</IC> (1536-dim), you MUST embed questions with the SAME model. Mixing models (e.g., 3-small chunks + ada-002 questions) gives garbage similarity scores. The vectors live in different spaces.
         </Callout>
       </Section>
 
@@ -593,8 +593,8 @@ QUERY: Is the X1 waterproof?
           head={["Metric", "Formula", "Range", "When to use"]}
           rows={[
             [<><strong>Cosine similarity</strong></>, <><IC>{`dot(a, b) / (norm(a) * norm(b))`}</IC></>, "-1 to 1 (1 = identical)", "Text embeddings (default). Ignores magnitude, focuses on direction. Best for semantic similarity."],
-            [<><strong>Dot product</strong></>, <><IC>{`sum(a[i] * b[i])`}</IC></>, "- to ", "Faster than cosine (no norm calculation). Works if embeddings are pre-normalized (unit length). FAISS uses this."],
-            [<><strong>Euclidean distance</strong></>, <><IC>{`sqrt(sum((a[i] - b[i])^2))`}</IC></>, "0 to  (0 = identical)", "Image embeddings, clustering. NOT recommended for text (sensitive to magnitude, not direction)."],
+            [<><strong>Dot product</strong></>, <><IC>{`sum(a[i] * b[i])`}</IC></>, "-∞ to ∞", "Faster than cosine (no norm calculation). Works if embeddings are pre-normalized (unit length). FAISS uses this."],
+            [<><strong>Euclidean distance</strong></>, <><IC>{`sqrt(sum((a[i] - b[i])^2))`}</IC></>, "0 to ∞ (0 = identical)", "Image embeddings, clustering. NOT recommended for text (sensitive to magnitude, not direction)."],
           ]}
         />
         <P>
@@ -609,47 +609,47 @@ a = np.array([1, 2, 0])
 b = np.array([2, 4, 0])  # parallel to a (same direction, 2x magnitude)
 c = np.array([0, 1, 0])  # orthogonal to a
 
-#    Cosine similarity   
+# ── Cosine similarity ──
 def cosine_similarity(x, y):
     return np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
 
 print("Cosine similarity:")
-print(f"  a vs b (parallel):     {cosine_similarity(a, b):.4f} ❓ 1.0 (identical direction)")
-print(f"  a vs c (orthogonal):   {cosine_similarity(a, c):.4f} ❓ 0.0 (unrelated)")
+print(f"  a vs b (parallel):     {cosine_similarity(a, b):.4f} → 1.0 (identical direction)")
+print(f"  a vs c (orthogonal):   {cosine_similarity(a, c):.4f} → 0.0 (unrelated)")
 print()
 
-#    Dot product   
+# ── Dot product ──
 print("Dot product:")
-print(f"  a ❓ b (parallel):      {np.dot(a, b):.4f} ❓ 10 (high because b has 2x magnitude)")
-print(f"  a ❓ c (orthogonal):    {np.dot(a, c):.4f} ❓ 2 (not zero! magnitude matters)")
+print(f"  a → b (parallel):      {np.dot(a, b):.4f} → 10 (high because b has 2x magnitude)")
+print(f"  a → c (orthogonal):    {np.dot(a, c):.4f} → 2 (not zero! magnitude matters)")
 print()
 
-#    Euclidean distance   
+# ── Euclidean distance ──
 print("Euclidean distance:")
-print(f"  ||a - b|| (parallel):  {np.linalg.norm(a - b):.4f} ❓ 2.24 (large despite parallel)")
-print(f"  ||a - c|| (orthogonal):{np.linalg.norm(a - c):.4f} ❓ 2.24 (same distance!)")
+print(f"  ||a - b|| (parallel):  {np.linalg.norm(a - b):.4f} → 2.24 (large despite parallel)")
+print(f"  ||a - c|| (orthogonal):{np.linalg.norm(a - c):.4f} → 2.24 (same distance!)")
 print()
 
 print("CONCLUSION:")
-print("  Cosine: 1.0 vs 0.0 ❓ correctly distinguishes parallel vs orthogonal.")
-print("  Dot product: 10 vs 2 ❓ magnitude-dependent (not ideal unless normalized).")
-print("  Euclidean: 2.24 vs 2.24 ❓ can't distinguish direction (bad for text).")`}
+print("  Cosine: 1.0 vs 0.0 → correctly distinguishes parallel vs orthogonal.")
+print("  Dot product: 10 vs 2 → magnitude-dependent (not ideal unless normalized).")
+print("  Euclidean: 2.24 vs 2.24 → can't distinguish direction (bad for text).")`}
           output={`Cosine similarity:
-  a vs b (parallel):     1.0000 ❓ 1.0 (identical direction)
-  a vs c (orthogonal):   0.4472 ❓ 0.0 (unrelated)
+  a vs b (parallel):     1.0000 → 1.0 (identical direction)
+  a vs c (orthogonal):   0.4472 → 0.0 (unrelated)
 
 Dot product:
-  a ❓ b (parallel):      10.0000 ❓ 10 (high because b has 2x magnitude)
-  a ❓ c (orthogonal):    2.0000 ❓ 2 (not zero! magnitude matters)
+  a → b (parallel):      10.0000 → 10 (high because b has 2x magnitude)
+  a → c (orthogonal):    2.0000 → 2 (not zero! magnitude matters)
 
 Euclidean distance:
-  ||a - b|| (parallel):  2.2361 ❓ 2.24 (large despite parallel)
-  ||a - c|| (orthogonal):2.2361 ❓ 2.24 (same distance!)
+  ||a - b|| (parallel):  2.2361 → 2.24 (large despite parallel)
+  ||a - c|| (orthogonal):2.2361 → 2.24 (same distance!)
 
 CONCLUSION:
-  Cosine: 1.0 vs 0.0 ❓ correctly distinguishes parallel vs orthogonal.
-  Dot product: 10 vs 2 ❓ magnitude-dependent (not ideal unless normalized).
-  Euclidean: 2.24 vs 2.24 ❓ can't distinguish direction (bad for text).`}
+  Cosine: 1.0 vs 0.0 → correctly distinguishes parallel vs orthogonal.
+  Dot product: 10 vs 2 → magnitude-dependent (not ideal unless normalized).
+  Euclidean: 2.24 vs 2.24 → can't distinguish direction (bad for text).`}
         />
         <P>
           <strong>Takeaway</strong>: Use <strong>cosine similarity</strong> for text embeddings (RAG). It&apos;s direction-based, not magnitude-based. If your embeddings are pre-normalized (unit length), dot product = cosine (faster).
@@ -668,7 +668,7 @@ CONCLUSION:
             ["Paraphrases", <>&quot;How long can it fly?&quot; H &quot;battery provides 28 minutes&quot;</>],
             ["Semantic relationships", <>&quot;warranty&quot; H &quot;returns&quot; (both legal/policy topics)</>],
             ["Topic clustering", <>All battery-related sentences cluster together in embedding space</>],
-            ["Negation (weak)", <>&quot;waterproof&quot; vs &quot;not waterproof&quot; ❓ somewhat similar (both mention waterproof)</>],
+            ["Negation (weak)", <>&quot;waterproof&quot; vs &quot;not waterproof&quot; → somewhat similar (both mention waterproof)</>],
           ]}
         />
         <P>
@@ -677,10 +677,10 @@ CONCLUSION:
         <Table
           head={["Limitation", "Example", "Why / Workaround"]}
           rows={[
-            [<><strong>Negation</strong></>, <>&quot;waterproof&quot; vs &quot;not waterproof&quot; ❓ 0.7 similarity (too high!)</>, <>Embeddings struggle with negation. Workaround: use an LLM to expand the query (&quot;Is it waterproof?&quot; ❓ &quot;Is the X1 waterproof or not?&quot;)</>],
-            [<><strong>Numbers</strong></>, <>&quot;28 minutes&quot; vs &quot;30 minutes&quot; ❓ similar (both are time durations)</>, <>Embeddings see &quot;28&quot; and &quot;30&quot; as semantically similar (numbers). If you need EXACT number matching, use hybrid search (keyword + embedding).</>],
-            [<><strong>Long text dilution</strong></>, <>A 500-word chunk about battery + warranty + wind ❓ embedding is &quot;averaged,&quot; less focused</>, <>Fix: split docs into SMALLER chunks (1 paragraph, ~200 words). Chapter 5 (loaders-splitters) covers this.</>],
-            [<><strong>Out-of-domain terms</strong></>, <>&quot;Nimbus X1&quot; (brand name, rare in training data) ❓ weaker embeddings</>, <>The model might not have seen &quot;Nimbus&quot; much. Still works (context clues), but not as strong as common words.</>],
+            [<><strong>Negation</strong></>, <>&quot;waterproof&quot; vs &quot;not waterproof&quot; → 0.7 similarity (too high!)</>, <>Embeddings struggle with negation. Workaround: use an LLM to expand the query (&quot;Is it waterproof?&quot; → &quot;Is the X1 waterproof or not?&quot;)</>],
+            [<><strong>Numbers</strong></>, <>&quot;28 minutes&quot; vs &quot;30 minutes&quot; → similar (both are time durations)</>, <>Embeddings see &quot;28&quot; and &quot;30&quot; as semantically similar (numbers). If you need EXACT number matching, use hybrid search (keyword + embedding).</>],
+            [<><strong>Long text dilution</strong></>, <>A 500-word chunk about battery + warranty + wind → embedding is &quot;averaged,&quot; less focused</>, <>Fix: split docs into SMALLER chunks (1 paragraph, ~200 words). Chapter 5 (loaders-splitters) covers this.</>],
+            [<><strong>Out-of-domain terms</strong></>, <>&quot;Nimbus X1&quot; (brand name, rare in training data) → weaker embeddings</>, <>The model might not have seen &quot;Nimbus&quot; much. Still works (context clues), but not as strong as common words.</>],
           ]}
         />
         <Callout type="tip">
@@ -758,7 +758,7 @@ Extrapolation:
       {/* 11 */}
       <Section id="debugging" number="11" title="Debugging Embedding Errors">
         <Callout type="mistake">
-          ❓ <strong>Error 1: Dimension mismatch (e.g., 1536 vs 3072)</strong>
+          ⚠️ <strong>Error 1: Dimension mismatch (e.g., 1536 vs 3072)</strong>
         </Callout>
         <P>
           <strong>Cause</strong>: You embedded chunks with <IC>text-embedding-3-small</IC> (1536-dim) but questions with <IC>text-embedding-3-large</IC> (3072-dim). Cosine similarity crashes (can&apos;t dot-product vectors of different lengths).
@@ -767,7 +767,7 @@ Extrapolation:
           <strong>Fix</strong>: Use the SAME model for ingest and query. Set <IC>model=&quot;text-embedding-3-small&quot;</IC> everywhere.
         </P>
         <Callout type="mistake">
-          ❓ <strong>Error 2: Empty string embedding</strong>
+          ⚠️ <strong>Error 2: Empty string embedding</strong>
         </Callout>
         <P>
           <strong>Cause</strong>: You sent <IC>input=&quot;&quot;</IC> (empty string) to the API. It returns a &quot;zero vector&quot; (all 0.0s), which breaks cosine similarity (divide by zero).
@@ -776,7 +776,7 @@ Extrapolation:
           <strong>Fix</strong>: Filter out empty chunks before embedding. Check: <IC>if chunk.strip(): embed(chunk)</IC>.
         </P>
         <Callout type="mistake">
-          ❓ <strong>Error 3: Normalizing embeddings (unit length)</strong>
+          ⚠️ <strong>Error 3: Normalizing embeddings (unit length)</strong>
         </Callout>
         <P>
           <strong>Optional optimization</strong>: If you normalize embeddings to unit length (divide by norm), dot product = cosine similarity (faster, no division needed). FAISS does this internally.
@@ -793,7 +793,7 @@ print("Norm:", np.linalg.norm(embedding))
 # Normalize to unit length
 normalized = embedding / np.linalg.norm(embedding)
 print("\\nNormalized:", normalized)
-print("Norm:", np.linalg.norm(normalized))  # ❓ 1.0
+print("Norm:", np.linalg.norm(normalized))  # → 1.0
 
 # Now: dot(a_norm, b_norm) = cosine(a, b)
 # This is what FAISS does for speed.`}
@@ -811,7 +811,7 @@ Norm: 1.0`}
           title="lab_tasks.txt"
           runnable={false}
           code={`LAB: Extend the semantic search engine
-                                                                
+────────────────────────────────────────────────────────────────
 
 TASK 1: Add 3 more chunks
   Add these to the DOCS list in semantic_search.py:
@@ -834,7 +834,7 @@ TASK 3: Compare keyword vs embedding retrieval
   Question: "What's the camera resolution?"
 
   A. Keyword retrieval (from Chapter 1):
-     Overlap with camera chunk: "what's" ❓ 0, "camera" ❓ 1, "resolution" ❓ 0
+     Overlap with camera chunk: "what's" → 0, "camera" → 1, "resolution" → 0
      Score = 1 (weak)
 
   B. Embedding retrieval (this chapter):
@@ -858,7 +858,7 @@ TASK 5: Normalize embeddings (bonus)
   Verify: scores are identical (within rounding error).
   Why: for unit vectors, dot product = cosine.
 
-                                                                
+────────────────────────────────────────────────────────────────
 LEARNING GOALS:
 
 - Practice embedding new chunks.
@@ -873,18 +873,18 @@ LEARNING GOALS:
         <Table
           head={["Question", "Strong answer"]}
           rows={[
-            ["What is an embedding?", "A vector (list of floats, e.g., 1536 numbers) representing text. Similar text ❓ similar vectors. Used for semantic search. Generated by an embedding model (e.g., text-embedding-3-small). Each dimension encodes a semantic feature (topic, sentiment, relationships). Distance between vectors = semantic similarity."],
+            ["What is an embedding?", "A vector (list of floats, e.g., 1536 numbers) representing text. Similar text → similar vectors. Used for semantic search. Generated by an embedding model (e.g., text-embedding-3-small). Each dimension encodes a semantic feature (topic, sentiment, relationships). Distance between vectors = semantic similarity."],
             ["Why do embeddings solve the paraphrase problem?", "Keyword search fails on paraphrases: 'How long can it fly?' shares NO words with 'battery provides 28 minutes,' so overlap = 0. Embeddings capture MEANING: both texts have close vectors (high cosine similarity, e.g., 0.87). Semantic search retrieves the right chunk even with zero keyword overlap."],
-            ["What is cosine similarity?", "A metric to compare two vectors: cos(❓) = dot(a, b) / (norm(a) ❓ norm(b)). Range: -1 (opposite) to 1 (identical). For text embeddings, usually 0.0-1.0. Measures direction, not magnitude. High score = similar meaning. Example: 'battery life' vs 'flight time' ❓ 0.85 (related)."],
-            ["How do you compute cosine similarity?", "1. Dot product: sum(a[i] ❓ b[i] for all dimensions). 2. Norms: sqrt(sum(a[i]^2)), sqrt(sum(b[i]^2)). 3. Divide: dot / (norm_a ❓ norm_b). In numpy: np.dot(a, b) / (np.linalg.norm(a) ❓ np.linalg.norm(b)). Result: a number between -1 and 1."],
-            ["Why use text-embedding-3-small for RAG?", "It's cheap ($0.02/1M tokens, 6x cheaper than 3-large), fast, and good quality. 1536 dimensions are enough for semantic search. 3-large (3072-dim) gives ~2% better accuracy but costs 6x more  not worth it for most RAG apps. Small = best value."],
+            ["What is cosine similarity?", "A metric to compare two vectors: cos(→) = dot(a, b) / (norm(a) → norm(b)). Range: -1 (opposite) to 1 (identical). For text embeddings, usually 0.0-1.0. Measures direction, not magnitude. High score = similar meaning. Example: 'battery life' vs 'flight time' → 0.85 (related)."],
+            ["How do you compute cosine similarity?", "1. Dot product: sum(a[i] → b[i] for all dimensions). 2. Norms: sqrt(sum(a[i]^2)), sqrt(sum(b[i]^2)). 3. Divide: dot / (norm_a → norm_b). In numpy: np.dot(a, b) / (np.linalg.norm(a) → np.linalg.norm(b)). Result: a number between -1 and 1."],
+            ["Why use text-embedding-3-small for RAG?", "It's cheap ($0.02/1M tokens, 6x cheaper than 3-large), fast, and good quality. 1536 dimensions are enough for semantic search. 3-large (3072-dim) gives ~2% better accuracy but costs 6x more — not worth it for most RAG apps. Small = best value."],
             ["Can you mix embedding models?", "NO. If you embed chunks with text-embedding-3-small (1536-dim), you MUST embed questions with the SAME model. Mixing models (e.g., 3-small chunks + ada-002 questions) gives garbage scores. The vectors live in different spaces (incompatible)."],
-            ["What are the limits of embeddings?", "1. Negation: 'waterproof' vs 'not waterproof' ❓ 0.7 similarity (too high). 2. Numbers: '28 min' vs '30 min' ❓ similar (both durations). 3. Long text: 500-word chunk ❓ diluted embedding (average of all topics). 4. Out-of-domain: rare terms (e.g., 'Nimbus') ❓ weaker. Fix: chunk smaller, use hybrid search (keyword + embedding)."],
-            ["What is the embedding ingest vs query cost?", "Ingest (one-time): 10K chunks ❓ ~24 tokens/chunk = 240K tokens ❓ $0.0048 (text-embedding-3-small). Query (per request): 1 question ❓ 10 tokens = $0.0002. Embedding is 1000x cheaper than LLM inference (gpt-4o-mini). Batch-embed chunks in one API call for speed."],
-            ["Cosine vs dot product vs euclidean  which for text?", "Cosine similarity (best for text). Measures direction, ignores magnitude. Dot product = faster IF embeddings are normalized (unit length). Euclidean distance = bad for text (sensitive to magnitude, not direction). Use cosine or dot (with normalization)."],
-            ["What does normalizing embeddings do?", "Divide each embedding by its norm (length) ❓ unit vector (length = 1.0). Benefit: for unit vectors, dot(a, b) = cosine(a, b) (no division needed, faster). FAISS does this internally. Trade-off: loses magnitude info (usually irrelevant for text)."],
+            ["What are the limits of embeddings?", "1. Negation: 'waterproof' vs 'not waterproof' → 0.7 similarity (too high). 2. Numbers: '28 min' vs '30 min' → similar (both durations). 3. Long text: 500-word chunk → diluted embedding (average of all topics). 4. Out-of-domain: rare terms (e.g., 'Nimbus') → weaker. Fix: chunk smaller, use hybrid search (keyword + embedding)."],
+            ["What is the embedding ingest vs query cost?", "Ingest (one-time): 10K chunks → ~24 tokens/chunk = 240K tokens → $0.0048 (text-embedding-3-small). Query (per request): 1 question → 10 tokens = $0.0002. Embedding is 1000x cheaper than LLM inference (gpt-4o-mini). Batch-embed chunks in one API call for speed."],
+            ["Cosine vs dot product vs euclidean — which for text?", "Cosine similarity (best for text). Measures direction, ignores magnitude. Dot product = faster IF embeddings are normalized (unit length). Euclidean distance = bad for text (sensitive to magnitude, not direction). Use cosine or dot (with normalization)."],
+            ["What does normalizing embeddings do?", "Divide each embedding by its norm (length) → unit vector (length = 1.0). Benefit: for unit vectors, dot(a, b) = cosine(a, b) (no division needed, faster). FAISS does this internally. Trade-off: loses magnitude info (usually irrelevant for text)."],
             ["How does batch embedding work?", "Instead of 10 API calls (one per chunk), send a list: input=[chunk1, chunk2, ..., chunk10]. The API embeds all 10 in parallel and returns 10 vectors in one response. Same cost, 10x faster. Use this during ingest: client.embeddings.create(input=all_chunks)."],
-            ["What's the difference between semantic and keyword search?", "Keyword search: counts word overlap. Fails on paraphrases ('How long can it fly?' vs 'battery 28 min' ❓ 0 overlap). Semantic search: uses embeddings, measures meaning. Succeeds on paraphrases (cosine similarity = 0.87). Keyword = fast but brittle. Semantic = slow (embedding API) but robust."],
+            ["What's the difference between semantic and keyword search?", "Keyword search: counts word overlap. Fails on paraphrases ('How long can it fly?' vs 'battery 28 min' → 0 overlap). Semantic search: uses embeddings, measures meaning. Succeeds on paraphrases (cosine similarity = 0.87). Keyword = fast but brittle. Semantic = slow (embedding API) but robust."],
           ]}
         />
       </Section>
@@ -893,18 +893,18 @@ LEARNING GOALS:
       <Section id="memorize" number="14" title="🧠 Memorize This">
         <MemorizeGrid
           items={[
-            ["Embedding definition", "Vector (1536 floats) representing text  similar text ❓ similar vectors (semantic search)"],
-            ["Get embedding", "client.embeddings.create(model='text-embedding-3-small', input='text') ❓ resp.data[0].embedding"],
-            ["Cosine formula", "dot(a, b) / (norm(a) ❓ norm(b))  range -1 to 1 (1 = identical, 0 = unrelated)"],
+            ["Embedding definition", "Vector (1536 floats) representing text — similar text → similar vectors (semantic search)"],
+            ["Get embedding", "client.embeddings.create(model='text-embedding-3-small', input='text') → resp.data[0].embedding"],
+            ["Cosine formula", "dot(a, b) / (norm(a) → norm(b)) — range -1 to 1 (1 = identical, 0 = unrelated)"],
             ["Why embeddings beat keywords", "Paraphrases: 'How long can it fly?' H 'battery 28 min' (0.87 score, 0 keyword overlap)"],
-            ["Model choice", "text-embedding-3-small (1536-dim, $0.02/1M)  cheap, fast, good (use for RAG)"],
-            ["NEVER mix models", "Same model for ingest + query (3-small chunks ❓ 3-small questions)  mixing = garbage"],
+            ["Model choice", "text-embedding-3-small (1536-dim, $0.02/1M) — cheap, fast, good (use for RAG)"],
+            ["NEVER mix models", "Same model for ingest + query (3-small chunks → 3-small questions) — mixing = garbage"],
             ["Semantic search flow", "1. Embed question 2. Compute cosine vs all chunks 3. Rank by score 4. Return top K"],
-            ["Cost example", "10K chunks ingest = $0.005 (one-time), 1K queries = $0.0002  embedding is CHEAP"],
-            ["Batch embedding", "input=[chunk1, chunk2, ...] ❓ embed all in one call (10x faster, same cost)"],
-            ["Normalization", "Divide by norm ❓ unit vector (length=1) ❓ dot product = cosine (faster, FAISS uses this)"],
-            ["Limits", "Negation weak, numbers fuzzy, long text diluted  fix: chunk smaller, use hybrid search"],
-            ["Retrieval = R in RAG", "Embed question ❓ cosine vs chunks ❓ top K  generation (LLM call) comes next"],
+            ["Cost example", "10K chunks ingest = $0.005 (one-time), 1K queries = $0.0002 — embedding is CHEAP"],
+            ["Batch embedding", "input=[chunk1, chunk2, ...] → embed all in one call (10x faster, same cost)"],
+            ["Normalization", "Divide by norm → unit vector (length=1) → dot product = cosine (faster, FAISS uses this)"],
+            ["Limits", "Negation weak, numbers fuzzy, long text diluted — fix: chunk smaller, use hybrid search"],
+            ["Retrieval = R in RAG", "Embed question → cosine vs chunks → top K — generation (LLM call) comes next"],
           ]}
         />
       </Section>
